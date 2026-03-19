@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+:root {
+  --bg0:#0E0F11;--bg1:#161719;--bg2:#1E2023;--bg3:#26292D;--bg4:#2E3237;
+  --line:rgba(255,255,255,0.07);--line2:rgba(255,255,255,0.14);
+  --t0:#F2F3F5;--t1:#9BA3AF;--t2:#5C6370;
+  --std:#3D8EF0;--std-dim:rgba(61,142,240,0.12);--std-mid:rgba(61,142,240,0.22);
+  --exp:#B06EE8;--exp-dim:rgba(176,110,232,0.12);--exp-mid:rgba(176,110,232,0.22);
+  --basic:#4CAF74;--smooth:#F5A623;--emphasis:#E8526A;
+  --spring:#2EC4B6;--spring-dim:rgba(46,196,182,0.12);
+  --acc:var(--std);
+  --r:6px;--rl:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'SF Pro Text',sans-serif;font-size:11px;background:var(--bg0);color:var(--t0);-webkit-font-smoothing:antialiased;overflow:hidden;width:320px;user-select:none;}
+.scroll{overflow-y:auto;max-height:calc(100vh - 40px);}
+.scroll::-webkit-scrollbar{width:3px;}
+.scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+
+/* HEADER */
+.hd{display:flex;align-items:center;gap:7px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--bg1);position:sticky;top:0;z-index:50;}
+.hd-mark{width:18px;height:18px;border-radius:4px;flex-shrink:0;background:linear-gradient(135deg,var(--std),var(--exp));display:flex;align-items:center;justify-content:center;}
+.hd-mark svg{width:9px;height:9px;}
+.hd-name{font-size:11px;font-weight:600;color:var(--t0);flex:1;}
+.hd-ver{font-size:9px;color:var(--t2);font-family:'DM Mono',monospace;}
+
+/* SEL BAR */
+.selbar{margin:7px 10px 0;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:5px 9px;display:flex;align-items:center;gap:6px;transition:border-color .2s;}
+.selbar.on{border-color:var(--line2);}
+.sel-dot{width:5px;height:5px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:background .3s;}
+.sel-dot.on{background:var(--basic);}
+.sel-lbl{font-size:10px;color:var(--t1);flex:1;}
+.sel-lbl b{color:var(--t0);font-weight:500;}
+.sel-ct{font-size:9px;font-family:'DM Mono',monospace;background:var(--bg3);color:var(--t1);padding:1px 5px;border-radius:3px;}
+
+/* DNA */
+.dna{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:7px 10px 0;}
+.dna-btn{padding:7px 9px;border-radius:var(--r);cursor:pointer;border:1px solid var(--line);background:var(--bg2);display:flex;align-items:center;gap:5px;transition:all .18s;}
+.dna-btn:hover{background:var(--bg3);border-color:var(--line2);}
+.dna-btn.std-on{background:var(--std-dim);border-color:rgba(61,142,240,.3);}
+.dna-btn.exp-on{background:var(--exp-dim);border-color:rgba(176,110,232,.3);}
+.d-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.d-dot-s{background:var(--std);}.d-dot-e{background:var(--exp);}
+.dna-ttl{font-size:11px;font-weight:600;}
+.dna-ttl.s{color:var(--std);}.dna-ttl.e{color:var(--exp);}
+.dna-sub{font-size:9px;color:var(--t2);margin-top:1px;}
+
+/* MODE TABS */
+.mode-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;margin:7px 10px 0;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:3px;gap:2px;}
+.mode-tab{padding:5px 8px;border-radius:4px;border:none;background:none;font-size:10px;font-weight:500;color:var(--t2);cursor:pointer;font-family:-apple-system,sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.mode-tab:hover{color:var(--t1);}
+.mode-tab.on{background:var(--bg3);color:var(--t0);border:1px solid var(--line2);}
+.mode-tab svg{width:10px;height:10px;flex-shrink:0;}
+
+/* CAT TABS */
+.cats{display:flex;gap:1px;padding:7px 10px 0;}
+.cat-btn{flex:1;padding:5px 4px;background:none;border:none;cursor:pointer;font-size:10px;font-weight:500;color:var(--t2);border-radius:5px;transition:all .15s;position:relative;font-family:-apple-system,sans-serif;}
+.cat-btn:hover{color:var(--t1);background:var(--bg2);}
+.cat-btn.on{color:var(--t0);}
+.cat-btn.on::after{content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:1.5px;background:var(--acc);border-radius:2px;}
+.cat-div{height:1px;background:var(--line);margin:5px 10px 0;}
+
+.sec-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);padding:8px 10px 4px;display:flex;align-items:center;justify-content:space-between;}
+.sec-tag{font-size:8px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--t2);background:var(--bg3);padding:1px 5px;border-radius:3px;}
+
+/* TEMPLATE CARDS */
+.tpl-wrap{padding:0 10px 6px;display:flex;flex-direction:column;gap:3px;}
+.tpl-card{border-radius:var(--r);border:1px solid var(--line);background:var(--bg2);cursor:pointer;transition:all .18s;overflow:hidden;position:relative;}
+.tpl-card:hover{background:var(--bg3);border-color:var(--line2);}
+.tpl-card.sel-basic{border-color:rgba(76,175,116,.5);background:rgba(76,175,116,.08);}
+.tpl-card.sel-smooth{border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.08);}
+.tpl-card.sel-emphasis{border-color:rgba(232,82,106,.5);background:rgba(232,82,106,.08);}
+.tpl-inner{padding:7px 9px;display:flex;align-items:center;gap:7px;}
+.v-tag{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 5px;border-radius:3px;width:52px;text-align:center;flex-shrink:0;}
+.vt-b{background:rgba(76,175,116,.15);color:var(--basic);border:1px solid rgba(76,175,116,.25);}
+.vt-s{background:rgba(245,166,35,.15);color:var(--smooth);border:1px solid rgba(245,166,35,.25);}
+.vt-e{background:rgba(232,82,106,.15);color:var(--emphasis);border:1px solid rgba(232,82,106,.25);}
+.crv{width:34px;height:20px;flex-shrink:0;}
+.tpl-meta{flex:1;min-width:0;}
+.tpl-tn{font-size:8px;font-family:'DM Mono',monospace;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tpl-role{font-size:9px;color:var(--t2);margin-top:2px;}
+.tpl-r{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;transition:opacity .15s;}
+.tpl-ms{font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:var(--t0);}
+.tpl-msu{font-size:8px;color:var(--t2);}
+.tpl-spr{font-size:8px;color:var(--spring);font-family:'DM Mono',monospace;}
+.use-pill{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--acc);color:white;font-size:9px;font-weight:600;padding:3px 8px;border-radius:4px;border:none;cursor:pointer;font-family:-apple-system,sans-serif;}
+.tpl-card:hover .use-pill{display:block;}
+.tpl-card:hover .tpl-r{opacity:0;}
+
+/* EASING PICKER — 2열 그리드 */
+.eas-wrap{padding:0 10px 4px;}
+.eas-grp{margin-bottom:5px;}
+.eg-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t2);padding:4px 0 3px;display:flex;align-items:center;gap:5px;}
+.eg-lbl::after{content:'';flex:1;height:1px;background:var(--line);}
+.e-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.e-grid.single{grid-template-columns:1fr;}
+.e-btn{padding:5px 8px;border-radius:5px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;transition:all .15s;display:flex;align-items:flex-start;gap:6px;font-family:-apple-system,sans-serif;}
+.e-btn:hover{background:var(--bg3);border-color:var(--line2);}
+.e-btn.on    {border-color:var(--std);background:rgba(61,142,240,.1);}
+.e-btn.on-exp{border-color:var(--exp);background:rgba(176,110,232,.1);}
+.e-btn.on-mix{border-color:var(--smooth);background:rgba(245,166,35,.1);}
+.e-btn.on-spr{border-color:var(--spring);background:rgba(46,196,182,.1);}
+.e-crv{width:28px;height:16px;flex-shrink:0;margin-top:2px;}
+.e-info{flex:1;min-width:0;}
+.e-name{font-size:9px;color:var(--t1);font-family:'DM Mono',monospace;}
+.e-vals{font-size:8px;color:var(--t2);margin-top:1px;font-family:'DM Mono',monospace;}
+.e-token-row{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;}
+.e-vbadge{font-size:7px;font-weight:700;text-transform:uppercase;padding:1px 4px;border-radius:2px;}
+.e-vbadge.basic   {background:rgba(76,175,116,.15);color:var(--basic);}
+.e-vbadge.smooth  {background:rgba(245,166,35,.15);color:var(--smooth);}
+.e-vbadge.emphasis{background:rgba(232,82,106,.15);color:var(--emphasis);}
+.e-unassigned{font-size:7px;color:var(--t2);padding:1px 0;}
+
+/* SPRING BOX */
+.spring-box{border-radius:var(--r);border:1px solid var(--line);background:var(--bg2);overflow:hidden;}
+.spring-preset{padding:7px 9px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .15s;border-bottom:1px solid var(--line);}
+.spring-preset:hover{background:var(--bg3);}
+.spring-preset.on{background:var(--spring-dim);border-bottom-color:rgba(46,196,182,.25);}
+.spr-crv{width:34px;height:20px;flex-shrink:0;}
+.spr-preset-info{flex:1;min-width:0;}
+.spr-preset-tn{font-size:8px;font-family:'DM Mono',monospace;color:var(--spring);}
+.spr-preset-sub{font-size:9px;color:var(--t2);margin-top:1px;}
+.spr-badge{font-size:8px;color:var(--spring);font-family:'DM Mono',monospace;background:rgba(46,196,182,.12);padding:2px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;}
+.spring-custom{padding:9px 10px;}
+.spr-custom-ttl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.spr-custom-ttl::after{content:'';flex:1;height:1px;background:var(--line);}
+.spr-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.spr-lbl{font-size:9px;color:var(--t2);width:58px;flex-shrink:0;}
+.spr-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:var(--bg4);outline:none;cursor:pointer;}
+.spr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--spring);cursor:pointer;border:2px solid var(--bg2);}
+.spr-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--t0);min-width:36px;text-align:right;}
+.spr-canvas-wrap{background:var(--bg3);border-radius:4px;height:60px;overflow:hidden;border:1px solid var(--line);margin-bottom:5px;}
+.spr-readout{display:flex;justify-content:space-between;font-size:8px;color:var(--t2);font-family:'DM Mono',monospace;}
+
+/* DURATION PICKER */
+.dur-wrap{padding:0 10px 4px;}
+.rg-grp{margin-bottom:3px;}
+.rg-hd{display:flex;align-items:center;gap:6px;padding:4px 0 3px;cursor:pointer;}
+.rg-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t2);}
+.rg-range{font-size:8px;color:var(--t2);flex:1;}
+.rg-arr{font-size:9px;color:var(--t2);transition:transform .2s;margin-left:auto;}
+.rg-arr.open{transform:rotate(180deg);}
+.rg-div{height:1px;background:var(--line);}
+.dur-pills{display:flex;flex-wrap:wrap;gap:3px;padding:4px 0 2px;}
+.dur-pill{padding:5px 8px;border-radius:4px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;transition:all .15s;}
+.dur-pill:hover{background:var(--bg3);border-color:var(--line2);}
+.dur-pill.on{border-color:var(--acc);background:rgba(61,142,240,.1);}
+.dur-pill-ms{font-size:10px;font-family:'DM Mono',monospace;color:var(--t1);}
+.dur-pill.on .dur-pill-ms{color:var(--t0);}
+.dur-pill-tn{font-size:8px;font-family:'DM Mono',monospace;color:var(--t2);margin-top:1px;}
+
+/* SAVE BAR */
+.save-bar{padding:8px 10px 4px;display:flex;gap:4px;}
+.save-input{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:5px 8px;font-size:10px;font-family:'DM Mono',monospace;color:var(--t0);outline:none;transition:border-color .15s;}
+.save-input::placeholder{color:var(--t2);}
+.save-input:focus{border-color:var(--line2);}
+.save-btn{padding:5px 10px;background:var(--std-dim);border:1px solid rgba(61,142,240,.3);border-radius:var(--r);color:var(--std);font-size:10px;font-weight:600;cursor:pointer;font-family:-apple-system,sans-serif;white-space:nowrap;transition:all .15s;}
+.save-btn:hover{background:var(--std-mid);}
+
+/* SAVED TOKENS TAB */
+.saved-section{margin:6px 10px 0;border:1px solid var(--line);border-radius:var(--rl);overflow:hidden;}
+.saved-hd{padding:7px 10px;background:var(--bg2);display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--line);}
+.saved-hd-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);flex:1;}
+.saved-count{font-size:9px;font-family:'DM Mono',monospace;background:var(--bg3);color:var(--t2);padding:1px 5px;border-radius:3px;}
+.saved-empty{padding:14px 10px;font-size:9px;color:var(--t2);text-align:center;line-height:1.6;}
+.saved-list{display:flex;flex-direction:column;}
+.saved-card{padding:6px 9px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s;}
+.saved-card:last-child{border-bottom:none;}
+.saved-card:hover{background:var(--bg3);}
+.saved-card.sel{background:rgba(61,142,240,.08);}
+.saved-crv{width:28px;height:16px;flex-shrink:0;}
+.saved-meta{flex:1;min-width:0;}
+.saved-tn{font-size:9px;font-family:'DM Mono',monospace;color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.saved-info{font-size:8px;color:var(--t2);margin-top:1px;font-family:'DM Mono',monospace;}
+.saved-del{width:18px;height:18px;border-radius:3px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:all .15s;flex-shrink:0;}
+.saved-del:hover{background:rgba(232,82,106,.15);color:var(--emphasis);}
+.saved-del svg{width:9px;height:9px;}
+
+/* SUMMARY */
+.summary{margin:6px 10px 0;padding:9px 10px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--rl);}
+.sum-tn-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.sum-tn{font-size:11px;font-family:'DM Mono',monospace;font-weight:500;color:var(--t0);flex:1;line-height:1.3;}
+.sum-custom-badge{font-size:8px;color:var(--smooth);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.3);padding:1px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0;}
+.sum-div{height:1px;background:var(--line);margin:5px 0;}
+.sum-row{display:flex;align-items:center;justify-content:space-between;padding:2px 0;}
+.sum-k{font-size:9px;color:var(--t2);}
+.sum-v{font-size:9px;font-family:'DM Mono',monospace;color:var(--t1);}
+
+/* CURVE */
+.crv-sec{padding:6px 10px 0;}
+.crv-wrap{background:var(--bg2);border-radius:var(--r);border:1px solid var(--line);height:80px;overflow:hidden;}
+.crv-wrap canvas{display:block;}
+.crv-foot{display:flex;justify-content:space-between;margin-top:3px;font-size:8px;color:var(--t2);font-family:'DM Mono',monospace;padding:0 2px;}
+
+/* APPLY */
+.apply-wrap{padding:8px 10px 10px;}
+.apply-btn{width:100%;padding:8px;border-radius:var(--r);cursor:pointer;border:1px solid rgba(61,142,240,.3);background:var(--std-dim);color:var(--std);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s;font-family:-apple-system,sans-serif;}
+.apply-btn:hover{background:var(--std-mid);}
+.apply-btn:active{transform:scale(.98);}
+.apply-btn.exp{background:var(--exp-dim);border-color:rgba(176,110,232,.3);color:var(--exp);}
+.apply-btn.exp:hover{background:var(--exp-mid);}
+.apply-btn svg{width:11px;height:11px;}
+
+/* TOAST */
+.toast{background:var(--bg3);border-top:1px solid var(--line2);padding:0 11px;display:flex;align-items:center;gap:6px;height:0;overflow:hidden;transition:height .2s cubic-bezier(.22,.25,0,1);font-size:10px;}
+.toast.show{height:28px;}
+.t-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;background:var(--basic);}
+.t-dot.err{background:var(--emphasis);}
+.t-msg{flex:1;color:var(--t1);}
+.t-tk{font-size:8px;color:var(--t2);font-family:'DM Mono',monospace;}
+
+.dna-panel{display:none;}.dna-panel.active{display:block;}
+.cat-panel{display:none;}.cat-panel.active{display:block;}
+.mode-panel{display:none;}.mode-panel.active{display:block;}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-mark">
+    <svg viewBox="0 0 9 9" fill="none"><circle cx="4.5" cy="4.5" r="3" stroke="white" stroke-width="1"/><path d="M4.5 3v1.5L5.5 5.5" stroke="white" stroke-width="1" stroke-linecap="round"/></svg>
+  </div>
+  <span class="hd-name">ST Motion Tokens</span>
+  <span class="hd-ver">Phase 1</span>
+</div>
+
+<div class="scroll">
+
+  <div class="selbar" id="selBar">
+    <div class="sel-dot" id="selDot"></div>
+    <div class="sel-lbl" id="selLbl">레이어를 선택하세요</div>
+    <div class="sel-ct" id="selCt">0</div>
+  </div>
+
+  <div class="dna">
+    <div class="dna-btn std-on" id="btnStd" onclick="switchDNA('standard')">
+      <div class="d-dot d-dot-s"></div>
+      <div><div class="dna-ttl s">Standard</div><div class="dna-sub">기능 중심</div></div>
+    </div>
+    <div class="dna-btn" id="btnExp" onclick="switchDNA('expressive')">
+      <div class="d-dot d-dot-e"></div>
+      <div><div class="dna-ttl e">Expressive</div><div class="dna-sub">감성 중심</div></div>
+    </div>
+  </div>
+
+  <!-- Mode tabs: Template / Custom / Saved -->
+  <div class="mode-tabs">
+    <button class="mode-tab on" id="modeTemplate" onclick="switchMode('template')">
+      <svg viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1"/><rect x="5.5" y="1" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1"/><rect x="1" y="5.5" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1"/><rect x="5.5" y="5.5" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1"/></svg>
+      Template
+    </button>
+    <button class="mode-tab" id="modeCustom" onclick="switchMode('custom')">
+      <svg viewBox="0 0 10 10" fill="none"><path d="M2 8L4.5 2.5L7 6L8.5 4" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Custom
+    </button>
+    <button class="mode-tab" id="modeSaved" onclick="switchMode('saved')">
+      <svg viewBox="0 0 10 10" fill="none"><path d="M2 1.5h6v7L5 7 2 8.5V1.5z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+      Saved<span id="savedTabBadge" style="display:none;margin-left:3px;background:rgba(245,166,35,.25);color:#F5A623;font-size:8px;padding:0 3px;border-radius:3px;font-family:'DM Mono',monospace;"></span>
+    </button>
+  </div>
+
+  <!-- ═══ TEMPLATE ═══ -->
+  <div class="mode-panel active" id="mode-template">
+    <div class="dna-panel active" id="tpl-panel-std">
+      <div class="cats" id="cats-tpl-std">
+        <button class="cat-btn on" onclick="switchCat('tpl-std','interactive',this)">Interactive</button>
+        <button class="cat-btn" onclick="switchCat('tpl-std','transition',this)">Transition</button>
+      </div>
+      <div class="cat-div"></div>
+      <div class="cat-panel active" id="tpl-std-interactive">
+        <div class="sec-lbl">Interactive <span class="sec-tag">즉각 반응</span></div>
+        <div class="tpl-wrap" id="tw-std-interactive"></div>
+      </div>
+      <div class="cat-panel" id="tpl-std-transition">
+        <div class="sec-lbl">Transition <span class="sec-tag">화면 이동</span></div>
+        <div class="tpl-wrap" id="tw-std-transition"></div>
+      </div>
+    </div>
+    <div class="dna-panel" id="tpl-panel-exp">
+      <div class="cats" id="cats-tpl-exp">
+        <button class="cat-btn on" onclick="switchCat('tpl-exp','interactive',this)">Interactive</button>
+        <button class="cat-btn" onclick="switchCat('tpl-exp','transition',this)">Transition</button>
+        <button class="cat-btn" onclick="switchCat('tpl-exp','expressive',this)">Expressive</button>
+      </div>
+      <div class="cat-div"></div>
+      <div class="cat-panel active" id="tpl-exp-interactive">
+        <div class="sec-lbl">Interactive <span class="sec-tag">물성 반응</span></div>
+        <div class="tpl-wrap" id="tw-exp-interactive"></div>
+      </div>
+      <div class="cat-panel" id="tpl-exp-transition">
+        <div class="sec-lbl">Transition <span class="sec-tag">공간 이동</span></div>
+        <div class="tpl-wrap" id="tw-exp-transition"></div>
+      </div>
+      <div class="cat-panel" id="tpl-exp-expressive">
+        <div class="sec-lbl">Expressive <span class="sec-tag">감동 연출</span></div>
+        <div class="tpl-wrap" id="tw-exp-expressive"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CUSTOM ═══ -->
+  <div class="mode-panel" id="mode-custom">
+
+    <div class="sec-lbl" style="margin-top:4px;">Easing <span class="sec-tag">커브 선택</span></div>
+    <div class="eas-wrap">
+
+      <!-- Main Path -->
+      <div class="eas-grp">
+        <div class="eg-lbl">Main Path</div>
+        <div class="e-grid">
+          <div class="e-btn on" id="eb-one" onclick="selectEasing('one')">
+            <svg class="e-crv" viewBox="0 0 28 16"><path d="M0 16 C2 15 3 14 28 0" fill="none" stroke="#3D8EF0" stroke-width="1.5"/></svg>
+            <div class="e-info">
+              <div class="e-name" style="color:var(--std)">OneEasing</div>
+              <div class="e-vals">[.22,.25,0,1]</div>
+              <div class="e-token-row" id="et-one"></div>
+            </div>
+          </div>
+          <div class="e-btn" id="eb-linear" onclick="selectEasing('linear')">
+            <svg class="e-crv" viewBox="0 0 28 16"><path d="M0 16 L28 0" fill="none" stroke="#9BA3AF" stroke-width="1.5"/></svg>
+            <div class="e-info">
+              <div class="e-name" style="color:var(--t1)">Linear</div>
+              <div class="e-vals">[0,0,1,1]</div>
+              <div class="e-token-row" id="et-linear"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spring -->
+      <div class="eas-grp">
+        <div class="eg-lbl">Spring</div>
+        <div class="spring-box">
+          <div class="spring-preset on" id="eb-spring" onclick="selectSpringPreset()">
+            <svg class="spr-crv" viewBox="0 0 34 20"><path d="M0 20 C3 20 3 0 9 7 C12 10 11 3 15 6 C18 8 17 4 22 5 C25 6 24 5 34 6" fill="none" stroke="#2EC4B6" stroke-width="1.5"/></svg>
+            <div class="spr-preset-info">
+              <div class="spr-preset-tn">st.expressive.interactive.basic</div>
+              <div class="spr-preset-sub">Basic preset · damping=1, stiffness=361</div>
+            </div>
+          </div>
+          <div class="spring-custom">
+            <div class="spr-custom-ttl">Custom</div>
+            <div class="spr-row">
+              <span class="spr-lbl">Damping</span>
+              <input type="range" class="spr-slider" id="slDamping" min="0.1" max="2" step="0.05" value="1">
+              <span class="spr-val" id="valDamping">1.00</span>
+            </div>
+            <div class="spr-row">
+              <span class="spr-lbl">Stiffness</span>
+              <input type="range" class="spr-slider" id="slStiffness" min="50" max="1000" step="10" value="361">
+              <span class="spr-val" id="valStiffness">361</span>
+            </div>
+            <div class="spr-canvas-wrap"><canvas id="sprCanvas" width="278" height="58"></canvas></div>
+            <div class="spr-readout">
+              <span>damping=<span id="rdDamping">1.00</span></span>
+              <span>stiffness=<span id="rdStiffness">361</span></span>
+              <span id="rdSettle">~300ms settle</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SineOut -->
+      <div class="eas-grp">
+        <div class="eg-lbl">SineOut — Enter / 진입</div>
+        <div class="e-grid" id="grid-sineout"></div>
+      </div>
+      <!-- SineIn -->
+      <div class="eas-grp">
+        <div class="eg-lbl">SineIn — Exit / 퇴장</div>
+        <div class="e-grid" id="grid-sinein"></div>
+      </div>
+      <!-- SineInOut -->
+      <div class="eas-grp">
+        <div class="eg-lbl">SineInOut — Move / 이동</div>
+        <div class="e-grid" id="grid-sineinout"></div>
+      </div>
+    </div>
+
+    <!-- Duration -->
+    <div class="sec-lbl" style="margin-top:2px;">Duration <span class="sec-tag">시간 선택</span></div>
+    <div class="dur-wrap" id="durWrap"></div>
+
+    <!-- Save -->
+    <div class="sec-lbl" style="margin-top:4px;">Token으로 저장 <span class="sec-tag">Saved 탭에 추가</span></div>
+    <div class="save-bar">
+      <input class="save-input" id="saveInput" type="text" placeholder="e.g. st.custom.card.enter" maxlength="60">
+      <button class="save-btn" onclick="saveCustomToken()">저장</button>
+    </div>
+
+  </div><!-- /custom -->
+
+  <!-- ═══ SAVED ═══ -->
+  <div class="mode-panel" id="mode-saved">
+    <div class="saved-section">
+      <div class="saved-hd">
+        <span class="saved-hd-lbl">Saved Tokens</span>
+        <span class="saved-count" id="savedCount">0</span>
+      </div>
+      <div class="saved-list" id="savedList">
+        <div class="saved-empty">저장된 커스텀 토큰이 없어요.<br>Custom 탭에서 조합을 만들고 저장하세요.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ALWAYS: Summary + Curve + Apply ═══ -->
+  <div class="summary">
+    <div class="sum-tn-row">
+      <span class="sum-tn" id="sumTN">st.standard.interactive.basic</span>
+      <span class="sum-custom-badge" id="sumCustomBadge" style="display:none">custom</span>
+    </div>
+    <div class="sum-div"></div>
+    <div class="sum-row"><span class="sum-k">Easing</span><span class="sum-v" id="sumEasing">SineOut33 · [.17,.17,.67,1]</span></div>
+    <div class="sum-row"><span class="sum-k">Duration</span><span class="sum-v" id="sumDuration">100ms · Short</span></div>
+  </div>
+
+  <div class="crv-sec">
+    <div class="crv-wrap"><canvas id="curveCanvas" width="298" height="78"></canvas></div>
+    <div class="crv-foot"><span>0</span><span id="curveLbl">SineOut33</span><span id="durLbl">100ms</span></div>
+  </div>
+
+  <div class="apply-wrap">
+    <button class="apply-btn" id="applyBtn" onclick="doApply()">
+      <svg viewBox="0 0 11 11" fill="none"><path d="M2 5.5L4.5 8L9 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      선택한 토큰 적용
+    </button>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="t-dot" id="tDot"></div>
+    <span class="t-msg" id="tMsg"></span>
+    <span class="t-tk" id="tTk"></span>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════
+// TOKEN DATA — 모든 easing 배정 완료
+// ════════════════════════════════════════
+const TOKENS = {
+  standard: {
+    interactive: [
+      { v:'basic',    tn:'st.standard.interactive.basic',
+        b:[.17,.17,.67,1], d:100, r:'Short',  role:'탭 피드백, 버튼 눌림',    col:'#3D8EF0' },
+      { v:'smooth',   tn:'st.standard.interactive.smooth',
+        b:[.17,.17,.5,1],  d:200, r:'Short',  role:'토글 전환, 슬라이더',     col:'#3D8EF0' },
+      { v:'emphasis', tn:'st.standard.interactive.emphasis',
+        b:[.17,.17,.3,1],  d:300, r:'Medium', role:'선택 확인, 스와이프 완료',col:'#3D8EF0' },
+    ],
+    transition: [
+      { v:'basic',    tn:'st.standard.transition.basic',
+        b:[.33,0,.67,1],   d:250, r:'Medium', role:'탭바 전환, 드로어',       col:'#3D8EF0' },
+      { v:'smooth',   tn:'st.standard.transition.smooth',
+        b:[.33,0,.5,1],    d:350, r:'Medium', role:'바텀시트, 다이얼로그',    col:'#3D8EF0' },
+      { v:'emphasis', tn:'st.standard.transition.emphasis',
+        b:[.33,0,.3,1],    d:450, r:'Long',   role:'전체화면 depth 전환',     col:'#3D8EF0' },
+    ],
+  },
+  expressive: {
+    interactive: [
+      { v:'basic',    tn:'st.expressive.interactive.basic',
+        b:null, d:null, r:'물리', spring:true, role:'FAB 탭, 아이콘 모프',    col:'#2EC4B6' },
+      { v:'smooth',   tn:'st.expressive.interactive.smooth',
+        b:[.6,0,.83,.83],  d:300, r:'Medium', role:'칩 선택, 카드 확장',      col:'#B06EE8' },
+      { v:'emphasis', tn:'st.expressive.interactive.emphasis',
+        b:[.7,0,.83,.83],  d:400, r:'Medium', role:'즐겨찾기, 딜라이트',      col:'#B06EE8' },
+    ],
+    transition: [
+      { v:'basic',    tn:'st.expressive.transition.basic',
+        b:[.5,0,.83,.83],  d:350, r:'Medium', role:'카드→상세 진입',          col:'#B06EE8' },
+      { v:'smooth',   tn:'st.expressive.transition.smooth',
+        b:[.33,0,.4,1],    d:450, r:'Long',   role:'히어로 전환, 패널',       col:'#B06EE8' },
+      { v:'emphasis', tn:'st.expressive.transition.emphasis',
+        b:[.33,0,.2,1],    d:600, r:'Long',   role:'씬 전환, 모드 전환',      col:'#B06EE8' },
+    ],
+    expressive: [
+      { v:'basic',    tn:'st.expressive.expressive.basic',
+        b:[.17,.17,.2,1],  d:500, r:'Long',      role:'뱃지 팝, 성공 상태',   col:'#B06EE8' },
+      { v:'smooth',   tn:'st.expressive.expressive.smooth',
+        b:[.8,0,.83,.83],  d:700, r:'Extra Long', role:'완료 셀레브레이션',    col:'#B06EE8' },
+      { v:'emphasis', tn:'st.expressive.expressive.emphasis',
+        b:[.33,0,.1,1],    d:900, r:'Extra Long', role:'온보딩, 첫 진입',     col:'#B06EE8' },
+    ],
+  },
+};
+
+const ALL_TOKENS = Object.values(TOKENS).flatMap(c=>Object.values(c).flat());
+
+// Easing — 이름·bezier·색상·선택 클래스
+const EASING = {
+  one:         { name:'OneEasing',   b:[.22,.25,0,1],   col:'#3D8EF0', cls:'on' },
+  linear:      { name:'Linear',      b:[0,0,1,1],        col:'#9BA3AF', cls:'on-mix' },
+  sineOut33:   { name:'SineOut33',   b:[.17,.17,.67,1],  col:'#3D8EF0', cls:'on' },
+  sineOut50:   { name:'SineOut50',   b:[.17,.17,.5,1],   col:'#3D8EF0', cls:'on' },
+  sineOut60:   { name:'SineOut60',   b:[.17,.17,.4,1],   col:'#3D8EF0', cls:'on' },
+  sineOut70:   { name:'SineOut70',   b:[.17,.17,.3,1],   col:'#3D8EF0', cls:'on' },
+  sineOut80:   { name:'SineOut80',   b:[.17,.17,.2,1],   col:'#3D8EF0', cls:'on' },
+  sineOut90:   { name:'SineOut90',   b:[.17,.17,.1,1],   col:'#3D8EF0', cls:'on' },
+  sineIn33:    { name:'SineIn33',    b:[.33,0,.83,.83],  col:'#B06EE8', cls:'on-exp' },
+  sineIn50:    { name:'SineIn50',    b:[.5,0,.83,.83],   col:'#B06EE8', cls:'on-exp' },
+  sineIn60:    { name:'SineIn60',    b:[.6,0,.83,.83],   col:'#B06EE8', cls:'on-exp' },
+  sineIn70:    { name:'SineIn70',    b:[.7,0,.83,.83],   col:'#B06EE8', cls:'on-exp' },
+  sineIn80:    { name:'SineIn80',    b:[.8,0,.83,.83],   col:'#B06EE8', cls:'on-exp' },
+  sineIn90:    { name:'SineIn90',    b:[.9,0,.83,.83],   col:'#B06EE8', cls:'on-exp' },
+  sineInOut33: { name:'SineInOut33', b:[.33,0,.67,1],    col:'#F5A623', cls:'on-mix' },
+  sineInOut50: { name:'SineInOut50', b:[.33,0,.5,1],     col:'#F5A623', cls:'on-mix' },
+  sineInOut60: { name:'SineInOut60', b:[.33,0,.4,1],     col:'#F5A623', cls:'on-mix' },
+  sineInOut70: { name:'SineInOut70', b:[.33,0,.3,1],     col:'#F5A623', cls:'on-mix' },
+  sineInOut80: { name:'SineInOut80', b:[.33,0,.2,1],     col:'#F5A623', cls:'on-mix' },
+  sineInOut90: { name:'SineInOut90', b:[.33,0,.1,1],     col:'#F5A623', cls:'on-mix' },
+};
+
+const DURATIONS = [
+  { key:'short',     label:'Short',      range:'50–200ms',   vals:[50,100,150,200] },
+  { key:'medium',    label:'Medium',     range:'250–400ms',  vals:[250,300,350,400] },
+  { key:'long',      label:'Long',       range:'450–600ms',  vals:[450,500,550,600] },
+  { key:'extralong', label:'Extra Long', range:'700–1000ms', vals:[700,800,900,1000] },
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let activeDNA    = 'standard';
+let activeMode   = 'template';
+let curEasingKey = 'sineOut33';
+let curDur       = 100;
+let curDurRange  = 'short';
+let isSpring     = false;
+let isSpringCustom = false;
+let springD      = 1.0;
+let springK      = 361;
+let curBezier    = [.17,.17,.67,1];
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function cpPath(b,w,h){
+  if(!b) return '';
+  const[x1,y1,x2,y2]=b;
+  return `M0,${h} C${x1*w},${h-y1*h} ${x2*w},${h-y2*h} ${w},0`;
+}
+
+// 현재 bezier+duration과 가장 가까운 공식 토큰 반환
+function resolveTokenName(){
+  if(isSpring) return { tn:'st.expressive.interactive.basic', isCustom:isSpringCustom };
+  const exact = ALL_TOKENS.find(t=>
+    !t.spring && t.b && curBezier &&
+    t.b.join(',')===curBezier.join(',') && t.d===curDur
+  );
+  if(exact) return { tn:exact.tn, isCustom:false };
+  const sameCurve = ALL_TOKENS.filter(t=>!t.spring && t.b && curBezier && t.b.join(',')===curBezier.join(','));
+  if(sameCurve.length){
+    const closest = sameCurve.reduce((a,b)=>Math.abs(a.d-curDur)<=Math.abs(b.d-curDur)?a:b);
+    return { tn:closest.tn, isCustom:true };
+  }
+  const byDur = ALL_TOKENS.filter(t=>!t.spring).reduce((a,b)=>Math.abs(a.d-curDur)<=Math.abs(b.d-curDur)?a:b);
+  return { tn:byDur.tn, isCustom:true };
+}
+
+// 어떤 bezier에 배정된 토큰들 반환
+function getMappedTokens(b){
+  if(!b) return [];
+  return ALL_TOKENS.filter(t=>!t.spring && t.b && t.b.join(',')===b.join(','));
+}
+
+// ════════════════════════════════════════
+// RENDER TEMPLATES
+// ════════════════════════════════════════
+function renderTemplates(){
+  const pairs=[
+    ['standard','interactive','tw-std-interactive'],
+    ['standard','transition', 'tw-std-transition'],
+    ['expressive','interactive','tw-exp-interactive'],
+    ['expressive','transition', 'tw-exp-transition'],
+    ['expressive','expressive', 'tw-exp-expressive'],
+  ];
+  pairs.forEach(([dna,cat,id])=>{
+    const wrap=document.getElementById(id); if(!wrap) return;
+    wrap.innerHTML='';
+    TOKENS[dna][cat].forEach(tk=>{
+      const col=tk.col||'#3D8EF0';
+      const svgP=tk.spring
+        ?`<path d="M0 20 C3 20 3 0 9 7 C12 10 11 3 15 6 C18 8 17 4 22 5 C25 6 24 5 34 6" fill="none" stroke="#2EC4B6" stroke-width="1.5"/>`
+        :`<path d="${cpPath(tk.b,34,20)}" fill="none" stroke="${col}" stroke-width="1.5"/>`;
+      const rhs=tk.spring
+        ?`<span class="tpl-spr">spring</span>`
+        :`<span class="tpl-ms">${tk.d}</span><span class="tpl-msu">ms</span>`;
+      const vm={basic:'b',smooth:'s',emphasis:'e'};
+      const el=document.createElement('div');
+      el.className='tpl-card';
+      el.innerHTML=`
+        <div class="tpl-inner">
+          <span class="v-tag vt-${vm[tk.v]}">${tk.v}</span>
+          <svg class="crv" viewBox="0 0 34 20">${svgP}</svg>
+          <div class="tpl-meta">
+            <div class="tpl-tn" style="color:${col}">${tk.tn}</div>
+            <div class="tpl-role">${tk.role}</div>
+          </div>
+          <div class="tpl-r">${rhs}</div>
+        </div>
+        <button class="use-pill">사용</button>`;
+      const applyFn=()=>{
+        document.querySelectorAll('.tpl-card').forEach(c=>c.className='tpl-card');
+        el.classList.add(`sel-${tk.v}`);
+        isSpring=!!tk.spring; isSpringCustom=false;
+        curBezier=tk.b ? [...tk.b] : null;
+        if(tk.d){ curDur=tk.d; const r=DURATIONS.find(r=>r.vals.includes(tk.d)); if(r) curDurRange=r.key; }
+        if(tk.spring){ springD=1.0; springK=361; }
+        updateSummary(tk.tn, false);
+        drawMainCurve();
+      };
+      el.querySelector('.use-pill').addEventListener('click',e=>{e.stopPropagation();applyFn();});
+      el.addEventListener('click',applyFn);
+      wrap.appendChild(el);
+    });
+  });
+}
+
+// ════════════════════════════════════════
+// RENDER EASING PICKER (2열 그리드 + 토큰 뱃지)
+// ════════════════════════════════════════
+function makeBadges(b){
+  const tks=getMappedTokens(b);
+  if(!tks.length) return `<span class="e-unassigned">—</span>`;
+  const priority={basic:0,smooth:1,emphasis:2};
+  return [...tks].sort((a,b2)=>(priority[a.v]??9)-(priority[b2.v]??9))
+    .map(t=>`<span class="e-vbadge ${t.v}">${t.v}</span>`).join('');
+}
+
+function renderEasingPicker(){
+  // Main path badges (static buttons already in HTML)
+  document.getElementById('et-one').innerHTML    = makeBadges(EASING.one.b);
+  document.getElementById('et-linear').innerHTML = makeBadges(EASING.linear.b);
+
+  const groups={
+    'grid-sineout':  ['sineOut33','sineOut50','sineOut60','sineOut70','sineOut80','sineOut90'],
+    'grid-sinein':   ['sineIn33','sineIn50','sineIn60','sineIn70','sineIn80','sineIn90'],
+    'grid-sineinout':['sineInOut33','sineInOut50','sineInOut60','sineInOut70','sineInOut80','sineInOut90'],
+  };
+  Object.entries(groups).forEach(([gid,keys])=>{
+    const g=document.getElementById(gid); if(!g) return;
+    g.innerHTML='';
+    keys.forEach(key=>{
+      const et=EASING[key];
+      const btn=document.createElement('div');
+      btn.className='e-btn'; btn.id=`eb-${key}`;
+      btn.innerHTML=`
+        <svg class="e-crv" viewBox="0 0 28 16">
+          <path d="${cpPath(et.b,28,16)}" fill="none" stroke="${et.col}" stroke-width="1.5"/>
+        </svg>
+        <div class="e-info">
+          <div class="e-name" style="color:${et.col}">${et.name}</div>
+          <div class="e-vals">[${et.b.join(',')}]</div>
+          <div class="e-token-row">${makeBadges(et.b)}</div>
+        </div>`;
+      btn.addEventListener('click',()=>selectEasing(key));
+      g.appendChild(btn);
+    });
+  });
+}
+
+function selectEasing(key){
+  curEasingKey=key; isSpring=false; isSpringCustom=false;
+  curBezier=EASING[key].b;
+  document.querySelectorAll('.e-btn').forEach(b=>b.classList.remove('on','on-exp','on-mix','on-spr'));
+  document.getElementById('eb-spring').classList.remove('on');
+  const btn=document.getElementById(`eb-${key}`);
+  if(btn) btn.classList.add(EASING[key].cls||'on');
+  const{tn,isCustom}=resolveTokenName();
+  updateSummary(tn,isCustom);
+  drawMainCurve();
+}
+
+// ════════════════════════════════════════
+// SPRING
+// ════════════════════════════════════════
+function selectSpringPreset(){
+  isSpring=true; isSpringCustom=false; springD=1.0; springK=361; curBezier=null;
+  document.getElementById('slDamping').value=1.0;
+  document.getElementById('slStiffness').value=361;
+  document.querySelectorAll('.e-btn').forEach(b=>b.classList.remove('on','on-exp','on-mix','on-spr'));
+  document.getElementById('eb-spring').classList.add('on');
+  syncSpring();
+  updateSummary('st.expressive.interactive.basic',false);
+  drawMainCurve();
+}
+
+function syncSpring(){
+  document.getElementById('valDamping').textContent=springD.toFixed(2);
+  document.getElementById('valStiffness').textContent=springK;
+  document.getElementById('rdDamping').textContent=springD.toFixed(2);
+  document.getElementById('rdStiffness').textContent=springK;
+  const settle=Math.round(3000/(springD*Math.sqrt(springK)));
+  document.getElementById('rdSettle').textContent=`~${Math.min(settle,2000)}ms settle`;
+  drawSpringPreview();
+}
+
+document.getElementById('slDamping').addEventListener('input',function(){
+  springD=parseFloat(this.value); isSpring=true; isSpringCustom=true; curBezier=null;
+  document.getElementById('eb-spring').classList.remove('on');
+  document.querySelectorAll('.e-btn').forEach(b=>b.classList.remove('on','on-exp','on-mix','on-spr'));
+  syncSpring(); updateSummary('st.expressive.interactive.basic',true); drawMainCurve();
+});
+document.getElementById('slStiffness').addEventListener('input',function(){
+  springK=parseInt(this.value); isSpring=true; isSpringCustom=true; curBezier=null;
+  document.getElementById('eb-spring').classList.remove('on');
+  document.querySelectorAll('.e-btn').forEach(b=>b.classList.remove('on','on-exp','on-mix','on-spr'));
+  syncSpring(); updateSummary('st.expressive.interactive.basic',true); drawMainCurve();
+});
+
+function drawSpringPreview(){
+  const canvas=document.getElementById('sprCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,PAD=5;
+  const iW=W-PAD*2,iH=H-PAD*2;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=.5;
+  [.25,.5,.75].forEach(t=>{
+    ctx.beginPath();ctx.moveTo(PAD+t*iW,PAD);ctx.lineTo(PAD+t*iW,PAD+iH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PAD,PAD+t*iH);ctx.lineTo(PAD+iW,PAD+t*iH);ctx.stroke();
+  });
+  const d=springD,k=springK,omega=Math.sqrt(k);
+  ctx.strokeStyle='#2EC4B6';ctx.lineWidth=1.8;ctx.beginPath();
+  for(let i=0;i<=120;i++){
+    const t=i/120;
+    let v;
+    if(d>=1){ v=1-Math.exp(-d*omega*t*0.04)*(1+d*omega*t*0.04); }
+    else{ const wd=omega*Math.sqrt(1-d*d); v=1-Math.exp(-d*omega*t*0.04)*(Math.cos(wd*t*0.04)+(d/Math.sqrt(1-d*d))*Math.sin(wd*t*0.04)); }
+    const x=PAD+t*iW,y=PAD+iH-Math.min(Math.max(v,-0.15),1.2)*iH;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+// ════════════════════════════════════════
+// DURATION PICKER
+// ════════════════════════════════════════
+function renderDurPicker(){
+  const wrap=document.getElementById('durWrap'); wrap.innerHTML='';
+  DURATIONS.forEach(rng=>{
+    const isOpen=rng.key===curDurRange;
+    const grp=document.createElement('div'); grp.className='rg-grp';
+    grp.innerHTML=`
+      <div class="rg-hd">
+        <span class="rg-lbl">${rng.label}</span>
+        <span class="rg-range">${rng.range}</span>
+        <span class="rg-arr${isOpen?' open':''}" id="arr-${rng.key}">▾</span>
+      </div>
+      <div class="rg-div"></div>
+      <div class="dur-pills" id="pills-${rng.key}" style="${isOpen?'':'display:none'}">
+        ${rng.vals.map(ms=>`
+          <div class="dur-pill${curDur===ms?' on':''}" data-ms="${ms}" data-rk="${rng.key}">
+            <div class="dur-pill-ms">${ms}ms</div>
+            <div class="dur-pill-tn">st.duration.${rng.label.toLowerCase().replace(' ','')}</div>
+          </div>`).join('')}
+      </div>`;
+    grp.querySelector('.rg-hd').addEventListener('click',()=>{
+      const pills=document.getElementById(`pills-${rng.key}`);
+      const arr=document.getElementById(`arr-${rng.key}`);
+      const open=pills.style.display!=='none';
+      pills.style.display=open?'none':'flex';
+      arr.classList.toggle('open',!open);
+    });
+    grp.querySelectorAll('.dur-pill').forEach(p=>{
+      p.addEventListener('click',()=>{
+        curDur=parseInt(p.dataset.ms); curDurRange=p.dataset.rk;
+        document.querySelectorAll('.dur-pill').forEach(pp=>pp.classList.remove('on'));
+        p.classList.add('on');
+        const{tn,isCustom}=resolveTokenName();
+        updateSummary(tn,isCustom); drawMainCurve();
+      });
+    });
+    wrap.appendChild(grp);
+  });
+}
+
+// ════════════════════════════════════════
+// SUMMARY + CURVE
+// ════════════════════════════════════════
+function updateSummary(tn,isCustom){
+  document.getElementById('sumTN').textContent=tn;
+  document.getElementById('sumCustomBadge').style.display=isCustom?'inline-block':'none';
+  if(isSpring){
+    document.getElementById('sumEasing').textContent=`Spring · d=${springD.toFixed(2)} k=${springK}`;
+    document.getElementById('sumDuration').textContent='physics';
+  } else {
+    const et=EASING[curEasingKey];
+    document.getElementById('sumEasing').textContent=et?`${et.name} · [${curBezier?curBezier.join(','):''}]`:'';
+    const rng=DURATIONS.find(r=>r.key===curDurRange);
+    document.getElementById('sumDuration').textContent=`${curDur}ms · ${rng?rng.label:''}`;
+  }
+  document.getElementById('applyBtn').className=`apply-btn${activeDNA==='expressive'?' exp':''}`;
+}
+
+function drawMainCurve(){
+  const canvas=document.getElementById('curveCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,PAD=9;
+  const iW=W-PAD*2,iH=H-PAD*2;
+  const col=isSpring?'#2EC4B6':(EASING[curEasingKey]?EASING[curEasingKey].col:'#3D8EF0');
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=.5;
+  [.25,.5,.75].forEach(t=>{
+    ctx.beginPath();ctx.moveTo(PAD+t*iW,PAD);ctx.lineTo(PAD+t*iW,PAD+iH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PAD,PAD+t*iH);ctx.lineTo(PAD+iW,PAD+t*iH);ctx.stroke();
+  });
+  if(isSpring){
+    const d=springD,k=springK,omega=Math.sqrt(k);
+    ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.beginPath();
+    for(let i=0;i<=100;i++){
+      const t=i/100;
+      let v;
+      if(d>=1){ v=1-Math.exp(-d*omega*t*0.05)*(1+d*omega*t*0.05); }
+      else{ const wd=omega*Math.sqrt(1-d*d); v=1-Math.exp(-d*omega*t*0.05)*(Math.cos(wd*t*0.05)+(d/Math.sqrt(1-d*d))*Math.sin(wd*t*0.05)); }
+      const x=PAD+t*iW,y=PAD+iH-Math.min(Math.max(v,-0.1),1.1)*iH;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    document.getElementById('curveLbl').textContent=`Spring d=${springD.toFixed(2)} k=${springK}`;
+    document.getElementById('durLbl').textContent='physics';
+    return;
+  }
+  if(!curBezier) return;
+  const[x1,y1,x2,y2]=curBezier;
+  const sx=PAD,sy=PAD+iH,ex=PAD+iW,ey=PAD;
+  const cp1x=PAD+x1*iW,cp1y=PAD+iH-y1*iH,cp2x=PAD+x2*iW,cp2y=PAD+iH-y2*iH;
+  ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=.8;ctx.setLineDash([2,3]);
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(cp1x,cp1y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(cp2x,cp2y);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  [[cp1x,cp1y],[cp2x,cp2y]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();});
+  ctx.strokeStyle=col;ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,ex,ey);ctx.stroke();
+  ctx.fillStyle=col;
+  [[sx,sy],[ex,ey]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();});
+  const et=EASING[curEasingKey];
+  document.getElementById('curveLbl').textContent=et?et.name:'';
+  document.getElementById('durLbl').textContent=`${curDur}ms`;
+}
+
+// ════════════════════════════════════════
+// SWITCHING
+// ════════════════════════════════════════
+function switchMode(mode){
+  activeMode=mode;
+  ['template','custom','saved'].forEach(m=>{
+    document.getElementById(`mode-${m}`).classList.toggle('active',m===mode);
+  });
+  document.getElementById('modeTemplate').classList.toggle('on',mode==='template');
+  document.getElementById('modeCustom').classList.toggle('on',mode==='custom');
+  document.getElementById('modeSaved').classList.toggle('on',mode==='saved');
+}
+
+function switchDNA(dna){
+  activeDNA=dna; const isExp=dna==='expressive';
+  document.getElementById('tpl-panel-std').classList.toggle('active',!isExp);
+  document.getElementById('tpl-panel-exp').classList.toggle('active',isExp);
+  document.getElementById('btnStd').className=`dna-btn${!isExp?' std-on':''}`;
+  document.getElementById('btnExp').className=`dna-btn${isExp?' exp-on':''}`;
+  document.getElementById('applyBtn').className=`apply-btn${isExp?' exp':''}`;
+  document.documentElement.style.setProperty('--acc',isExp?'var(--exp)':'var(--std)');
+}
+
+function switchCat(prefix,cat,btn){
+  const wrap=document.getElementById(`cats-${prefix}`);
+  wrap.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const panelId=prefix==='tpl-std'?'tpl-panel-std':'tpl-panel-exp';
+  document.querySelectorAll(`#${panelId} .cat-panel`).forEach(p=>p.classList.remove('active'));
+  document.getElementById(`${prefix}-${cat}`).classList.add('active');
+}
+
+// ════════════════════════════════════════
+// APPLY
+// ════════════════════════════════════════
+function doApply(){
+  const tn=document.getElementById('sumTN').textContent;
+  parent.postMessage({pluginMessage:{
+    type:'apply-token',
+    tokenName:tn,
+    bezier:curBezier,
+    isSpring,
+    springDamping:springD,
+    springStiffness:springK,
+    duration:curDur,
+    figmaEasing:isSpring?'SPRING':'CUSTOM_CUBIC_BEZIER',
+  }},'*');
+}
+
+// ════════════════════════════════════════
+// SAVED TOKENS (localStorage)
+// ════════════════════════════════════════
+const LS_KEY='st-motion-saved';
+function loadSaved(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return []; } }
+function persistSaved(list){ localStorage.setItem(LS_KEY,JSON.stringify(list)); }
+
+function saveCustomToken(){
+  const input=document.getElementById('saveInput');
+  const name=input.value.trim();
+  if(!name){ showToast('토큰 이름을 입력하세요','',true); return; }
+  const list=loadSaved();
+  if(list.find(t=>t.tn===name)){ showToast('이미 존재하는 이름이에요','',true); return; }
+  list.push({
+    tn:name, isSpring, b:isSpring?null:(curBezier?[...curBezier]:null),
+    d:isSpring?null:curDur, r:isSpring?'물리':(DURATIONS.find(r=>r.key===curDurRange)||{}).label||'',
+    springD:isSpring?springD:null, springK:isSpring?springK:null, savedAt:Date.now()
+  });
+  persistSaved(list);
+  input.value='';
+  renderSaved();
+  switchMode('saved');
+  showToast('저장됨',name);
+}
+
+function deleteSaved(tn){
+  persistSaved(loadSaved().filter(t=>t.tn!==tn));
+  renderSaved();
+}
+
+function applySaved(token){
+  isSpring=token.isSpring; isSpringCustom=token.isSpring&&(token.springD!==1||token.springK!==361);
+  curBezier=token.b?[...token.b]:null; curDur=token.d||100;
+  if(token.isSpring){ springD=token.springD||1; springK=token.springK||361; syncSpring(); }
+  const rng=DURATIONS.find(r=>r.label===token.r); if(rng) curDurRange=rng.key;
+  updateSummary(token.tn,false); drawMainCurve();
+  document.querySelectorAll('.saved-card').forEach(c=>c.classList.remove('sel'));
+  const el=document.querySelector(`.saved-card[data-tn="${CSS.escape(token.tn)}"]`);
+  if(el) el.classList.add('sel');
+}
+
+function renderSaved(){
+  const list=loadSaved();
+  const listEl=document.getElementById('savedList');
+  const countEl=document.getElementById('savedCount');
+  const badge=document.getElementById('savedTabBadge');
+  countEl.textContent=list.length;
+  badge.textContent=list.length; badge.style.display=list.length>0?'inline':'none';
+  if(!list.length){
+    listEl.innerHTML='<div class="saved-empty">저장된 커스텀 토큰이 없어요.<br>Custom 탭에서 조합을 만들고 저장하세요.</div>';
+    return;
+  }
+  listEl.innerHTML='';
+  list.forEach(token=>{
+    const col=token.isSpring?'#2EC4B6':'#F5A623';
+    const svgPath=token.isSpring
+      ?`<path d="M0 16 C2 16 2 0 6 5 C8 8 7 2 10 4 C12 6 11 3 14 4 C16 5 16 4 18 4" fill="none" stroke="${col}" stroke-width="1.5"/>`
+      :`<path d="${cpPath(token.b,28,16)}" fill="none" stroke="${col}" stroke-width="1.5"/>`;
+    const info=token.isSpring
+      ?`spring · d=${token.springD} k=${token.springK}`
+      :`[${token.b?token.b.join(','):''}] · ${token.d}ms · ${token.r}`;
+    const card=document.createElement('div');
+    card.className='saved-card'; card.dataset.tn=token.tn;
+    card.innerHTML=`
+      <svg class="saved-crv" viewBox="0 0 28 16">${svgPath}</svg>
+      <div class="saved-meta">
+        <div class="saved-tn">${token.tn}</div>
+        <div class="saved-info">${info}</div>
+      </div>
+      <button class="saved-del" title="삭제">
+        <svg viewBox="0 0 9 9" fill="none"><path d="M2 2L7 7M7 2L2 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </button>`;
+    card.querySelector('.saved-del').addEventListener('click',e=>{e.stopPropagation();deleteSaved(token.tn);});
+    card.addEventListener('click',()=>applySaved(token));
+    listEl.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+let toastTimer;
+function showToast(msg,tk,err=false){
+  document.getElementById('tMsg').textContent=msg;
+  document.getElementById('tTk').textContent=tk||'';
+  document.getElementById('tDot').className=`t-dot${err?' err':''}`;
+  const t=document.getElementById('toast'); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ════════════════════════════════════════
+// MESSAGES FROM PLUGIN
+// ════════════════════════════════════════
+window.onmessage=(e)=>{
+  const msg=e.data.pluginMessage; if(!msg) return;
+  if(msg.type==='selection-info'){
+    const has=msg.count>0;
+    document.getElementById('selDot').className=`sel-dot${has?' on':''}`;
+    document.getElementById('selLbl').innerHTML=has
+      ?`<b>${msg.names.join(', ')}${msg.count>3?` 외 ${msg.count-3}개`:''}</b>`
+      :'레이어를 선택하세요';
+    document.getElementById('selCt').textContent=msg.count;
+    document.getElementById('selBar').classList.toggle('on',has);
+  }
+  if(msg.type==='apply-success') showToast(`${msg.count}개 레이어에 적용됨`,msg.tokenName);
+  if(msg.type==='apply-error')   showToast(msg.message,'',true);
+};
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+renderTemplates();
+renderEasingPicker();
+renderDurPicker();
+renderSaved();
+syncSpring();
+drawSpringPreview();
+curBezier=[.17,.17,.67,1];
+updateSummary('st.standard.interactive.basic',false);
+drawMainCurve();
+parent.postMessage({pluginMessage:{type:'get-selection'}},'*');
+</script>
+</body>
+</html>
