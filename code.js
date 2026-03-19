@@ -29,49 +29,67 @@ figma.ui.onmessage = async (msg) => {
     }
 
     let applied = 0;
+
     for (const node of nodes) {
       if (!('reactions' in node)) continue;
-      const reactions = node.reactions;
-
-      let easing;
-      if (msg.isSpring) {
-        easing = { type: 'SPRING' };
-      } else if (msg.bezier) {
-        easing = {
-          type: 'CUSTOM_CUBIC_BEZIER',
-          easingFunctionCubicBezier: {
-            x1: msg.bezier[0], y1: msg.bezier[1],
-            x2: msg.bezier[2], y2: msg.bezier[3]
-          }
-        };
-      } else {
-        easing = { type: 'EASE_OUT' };
-      }
-
-      const durationSec = msg.duration ? msg.duration / 1000 : 0.3;
 
       try {
+        const reactions = JSON.parse(JSON.stringify(node.reactions));
+        let easing;
+
+        if (msg.isSpring) {
+          easing = { type: 'EASE_OUT' };
+        } else if (msg.bezier) {
+          easing = {
+            type: 'CUSTOM_CUBIC_BEZIER',
+            easingFunctionCubicBezier: {
+              x1: msg.bezier[0],
+              y1: msg.bezier[1],
+              x2: msg.bezier[2],
+              y2: msg.bezier[3]
+            }
+          };
+        } else {
+          easing = { type: 'EASE_OUT' };
+        }
+
+        const dur = msg.duration ? msg.duration / 1000 : 0.3;
+
         if (reactions.length === 0) {
           node.reactions = [{
             trigger: { type: 'ON_CLICK' },
             action: {
-              type: 'NODE', destinationId: null, navigation: 'NAVIGATE',
-              transition: { type: 'MOVE_IN', direction: 'LEFT', matchLayers: false, easing, duration: durationSec },
+              type: 'NODE',
+              destinationId: null,
+              navigation: 'NAVIGATE',
+              transition: {
+                type: 'DISSOLVE',
+                easing: easing,
+                duration: dur
+              },
               preserveScrollPosition: false
             }
           }];
         } else {
           node.reactions = reactions.map(r => {
             if (r.action && r.action.transition) {
-              return { ...r, action: { ...r.action, transition: { ...r.action.transition, easing, duration: durationSec } } };
+              r.action.transition.easing = easing;
+              r.action.transition.duration = dur;
             }
             return r;
           });
         }
         applied++;
-      } catch(e) {}
+      } catch(e) {
+        console.error(e);
+      }
     }
 
-    figma.ui.postMessage({ type: 'apply-success', count: applied, tokenName: msg.tokenName });
+    figma.ui.postMessage({
+      type: 'apply-success',
+      count: applied,
+      tokenName: msg.tokenName
+    });
+    return;
   }
 };
