@@ -1,9 +1,11 @@
 {
-  "name": "ST Motion Tokens",
-  "id": "st-motion-tokens-phase1",
+  "name": "ST Motion System v4",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
   "editorType": ["figma"],
-  "documentAccess": "dynamic-page"
+  "permissions": ["currentuser"],
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  }
 }
