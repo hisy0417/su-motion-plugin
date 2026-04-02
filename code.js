@@ -59,9 +59,11 @@ function count7TrackMotions(motionData) {
   if (!(motionData && motionData.triggers)) return { set: 0, total: 0 };
   let set = 0, total = 0;
   for (const trigger of motionData.triggers) {
-    for (const layer of ((trigger.layers != null ? trigger.layers : []))) {
+    const layerList = (trigger.layers != null ? trigger.layers : []);
+    for (const layer of layerList) {
       total++;
-      if ((layer.tracks && layer.tracks.some)(t => t.enabled && t.tokenId)) set++;
+      const trackList = (layer.tracks != null ? layer.tracks : []);
+      if (trackList.some(function(t) { return t.enabled && t.tokenId; })) set++;
     }
   }
   return { set, total };
@@ -273,8 +275,89 @@ async function scanFlowGraph() {
 //  merges with saved motion data.
 // ══════════════════════════════════════════════════════════════════════
 
+// ══════════════════════════════════════════════════════════════════════
+//  SCENE CAPTURE  — full-frame low-res PNG for preview background
+//  Resolution: longest side capped at SCENE_BG_MAX_PX (fast transfer)
+// ══════════════════════════════════════════════════════════════════════
+
+const SCENE_BG_MAX_PX = 390;  // matches phone-screen width — no upscaling needed
+
+async function captureSceneBg(node) {
+  try {
+    const longSide = Math.max(node.width, node.height);
+    const scale    = longSide > 0 ? Math.min(SCENE_BG_MAX_PX / longSide, 2) : 1;
+    const bytes    = await node.exportAsync({
+      format:     'PNG',
+      constraint: { type: 'SCALE', value: Math.max(scale, 0.25) },
+    });
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return 'data:image/png;base64,' + btoa(binary);
+  } catch (e) {
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  LAYER CAPTURE  — isolated layer PNG with alpha + exact coordinates
+//  Resolution: 2× for sharp overlay rendering on retina-like displays
+// ══════════════════════════════════════════════════════════════════════
+
+const LAYER_CAPTURE_SCALE = 2;
+
+async function captureLayer(layerId, frameId) {
+  // Find the target layer node anywhere on the page
+  const layerNode = figma.currentPage.findOne(function(n) { return n.id === layerId; });
+  if (!layerNode) {
+    figma.ui.postMessage({ type: 'LAYER_CAPTURE_DATA', layerId, error: 'not_found' });
+    return;
+  }
+
+  // Find the root frame to compute absolute position within it
+  const frameNode = figma.currentPage.findOne(function(n) { return n.id === frameId && n.type === 'FRAME'; });
+
+  // Compute absolute position within frame
+  let absX = 0, absY = 0;
+  try {
+    const at = layerNode.absoluteTransform;
+    const ft = frameNode ? frameNode.absoluteTransform : [[1,0,0],[0,1,0]];
+    absX = at[0][2] - ft[0][2];
+    absY = at[1][2] - ft[1][2];
+  } catch (e) {
+    absX = layerNode.x;
+    absY = layerNode.y;
+  }
+
+  // Export layer as high-res PNG with alpha channel
+  try {
+    const bytes = await layerNode.exportAsync({
+      format:     'PNG',
+      constraint: { type: 'SCALE', value: LAYER_CAPTURE_SCALE },
+    });
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    const b64 = 'data:image/png;base64,' + btoa(binary);
+
+    figma.ui.postMessage({
+      type:    'LAYER_CAPTURE_DATA',
+      layerId,
+      frameId,
+      src:     b64,
+      x:       absX,
+      y:       absY,
+      width:   layerNode.width,
+      height:  layerNode.height,
+      frameW:  frameNode ? frameNode.width  : 390,
+      frameH:  frameNode ? frameNode.height : 844,
+      opacity: (layerNode.opacity != null ? layerNode.opacity : 1),
+    });
+  } catch (e) {
+    figma.ui.postMessage({ type: 'LAYER_CAPTURE_DATA', layerId, error: 'export_failed' });
+  }
+}
+
 async function loadFrameForEditor(frameId, exportThumbs) {
-  const node = figma.currentPage.findOne(n => n.id === frameId && n.type === 'FRAME');
+  const node = figma.currentPage.findOne(function(n) { return n.id === frameId && n.type === 'FRAME'; });
   if (!node) {
     figma.ui.postMessage({ type: 'FRAME_DATA', frameId, layers: [], motionData: null });
     return;
@@ -283,11 +366,8 @@ async function loadFrameForEditor(frameId, exportThumbs) {
   const layers     = await buildLayerTree(node, node, 0);
   const motionData = await loadFrameData(frameId);
 
-  // Optional: export a full-frame thumbnail for the scene strip
-  let framethumb = null;
-  if (exportThumbs) {
-    framethumb = await exportNodeAsBase64Thumb(node);
-  }
+  // Always capture scene background for preview renderer
+  const sceneBg = await captureSceneBg(node);
 
   figma.ui.postMessage({
     type:       'FRAME_DATA',
@@ -295,7 +375,8 @@ async function loadFrameForEditor(frameId, exportThumbs) {
     frameName:  node.name,
     frameWidth: node.width,
     frameHeight:node.height,
-    framethumb,
+    framethumb: sceneBg,   // reuse framethumb slot — scene strip + preview bg
+    sceneBg:    sceneBg,   // explicit dedicated field for PreviewRenderer
     layers,
     motionData: (motionData != null ? motionData : null),
   });
@@ -441,9 +522,13 @@ figma.ui.onmessage = async msg => {
 
     // ── Load frame for Editor (with optional base64 thumbnails) ───────
     case 'LOAD_FRAME': {
-      // msg.exportThumbs === true only when the user double-clicks a
-      // FrameNode; keeps initial scan fast.
       await loadFrameForEditor(msg.frameId, (msg.exportThumbs != null ? msg.exportThumbs : false));
+      break;
+    }
+
+    // ── Capture individual layer PNG with alpha + coordinates ─────────
+    case 'CAPTURE_LAYER': {
+      await captureLayer(msg.layerId, msg.frameId);
       break;
     }
 
