@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <!--
+    Converted from Lottie JSON (sensing_blue.json)
+    Original: 80x80px, 60fps, 81 frames (~1.35s loop)
+    Color: #387aff | Effect: Ripple / Sonar pulse
+  -->
+
+  <defs>
+    <!-- Clip path for center solid circle (Layer 1) -->
+    <clipPath id="clip-center">
+      <circle cx="40" cy="40" r="20.08"/>
+    </clipPath>
+  </defs>
+
+  <!-- ============================================================
+       Layer 3: Medium Red Solid 2
+       Ripple starts at t=0, expands small→large over 118 frames (1.967s at 60fps)
+       opacity: 1→0 over same duration
+       Radius: ~13.04px → ~40.16px  (from mask bezier control points)
+  ============================================================ -->
+  <circle cx="40" cy="40" r="13.04" fill="#387aff">
+    <!-- Expand radius -->
+    <animate
+      attributeName="r"
+      from="13.04"
+      to="40.16"
+      dur="1.967s"
+      begin="0s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keyTimes="0;1"
+      keySplines="0.333 0 0.667 1"
+    />
+    <!-- Fade out opacity -->
+    <animate
+      attributeName="opacity"
+      from="1"
+      to="0"
+      dur="1.967s"
+      begin="0s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keyTimes="0;1"
+      keySplines="0.333 0 0.667 1"
+    />
+  </circle>
+
+  <!-- ============================================================
+       Layer 2: Medium Red Solid 3
+       Ripple is offset by -80 frames (≈ -1.333s), i.e. starts 0.633s after Layer 3
+       Duration: same 1.967s
+       begin offset = (118 - 80) / 60 = 0.633s
+  ============================================================ -->
+  <circle cx="40" cy="40" r="13.04" fill="#387aff">
+    <!-- Expand radius -->
+    <animate
+      attributeName="r"
+      from="13.04"
+      to="40.16"
+      dur="1.967s"
+      begin="0.633s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keyTimes="0;1"
+      keySplines="0.333 0 0.667 1"
+    />
+    <!-- Fade out opacity -->
+    <animate
+      attributeName="opacity"
+      from="1"
+      to="0"
+      dur="1.967s"
+      begin="0.633s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keyTimes="0;1"
+      keySplines="0.333 0 0.667 1"
+    />
+  </circle>
+
+  <!-- ============================================================
+       Layer 1: Red Color (center solid dot)
+       Static circle, always visible, scaled to 64% → radius ≈ 20.08
+       sc="#387aff", mask radius = 20.08px
+  ============================================================ -->
+  <circle cx="40" cy="40" r="20.08" fill="#387aff"/>
+
+</svg>
