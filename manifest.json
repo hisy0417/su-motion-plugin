@@ -1,11 +1,9 @@
 {
-  "name": "ST Motion System v4",
+  "name": "ST Motion System",
+  "id": "st-motion-system-v4",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
   "editorType": ["figma"],
-  "permissions": ["currentuser"],
-  "networkAccess": {
-    "allowedDomains": ["none"]
-  }
+  "permissions": ["currentuser"]
 }
