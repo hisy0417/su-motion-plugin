@@ -585,8 +585,41 @@ async function scanFlowGraphV2() {
     }
     if (!sourceFrame) continue;
 
-    // endId → Frame itself or Frame's inner layer → destFrame via parent chain
-    var destFrame = findOwnerFrame(endId);
+    // endId → destFrame: 3단계 fallback
+    // 방법 1: endId가 frameRegistry의 Frame 자신인 경우 직접 매칭
+    var destFrame = null;
+    for (var dfi = 0; dfi < frameRegistry.length; dfi++) {
+      if (frameRegistry[dfi].id === endId) {
+        destFrame = frameRegistry[dfi];
+        break;
+      }
+    }
+
+    // 방법 2: CONNECTOR absoluteBoundingBox 끝점 좌표로 Frame 찾기
+    // (endId가 컴포넌트 내부 레이어라 findOne()으로 탐색 불가한 경우 대비)
+    if (!destFrame) {
+      try {
+        var cb = conn.absoluteBoundingBox;
+        if (cb != null) {
+          var endX = cb.x + cb.width;
+          var endY = cb.y + cb.height / 2;
+          for (var dfi2 = 0; dfi2 < frameRegistry.length; dfi2++) {
+            var fb = frameRegistry[dfi2].bounds;
+            if (endX >= fb.x && endX <= fb.x2 &&
+                endY >= fb.y && endY <= fb.y2) {
+              destFrame = frameRegistry[dfi2];
+              break;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 방법 3: findOwnerFrame() parent chain fallback
+    if (!destFrame) {
+      destFrame = findOwnerFrame(endId);
+    }
+
     if (!destFrame) continue;
 
     // Skip self-loops
