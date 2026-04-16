@@ -211,7 +211,7 @@ async function scanFlowGraphLegacy() {
       height:     frame.height,
       trackSet:   set,
       trackTotal: total,
-      status:     total === 0 ? 'none' : set === total ? 'complete' : 'progress',
+      status:     (set > 0 && set === total) ? 'complete' : 'none',
       connections: [],
     };
   }
@@ -549,6 +549,25 @@ async function scanFlowGraphV2() {
     var absX = 0, absY = 0;
     try { absX = nf.absoluteTransform[0][2]; } catch (e) { absX = (nf.x != null ? nf.x : 0); }
     try { absY = nf.absoluteTransform[1][2]; } catch (e) { absY = (nf.y != null ? nf.y : 0); }
+
+    // Collect first INSTANCE child as representative component
+    var compName = null;
+    var compType = null;
+    try {
+      var frameChildren = (nf.children != null ? nf.children : []);
+      for (var fci = 0; fci < frameChildren.length; fci++) {
+        var fch = frameChildren[fci];
+        if (fch.type === 'INSTANCE') {
+          compName = fch.name;
+          var fcp = fch.componentProperties;
+          if (fcp && fcp['Type'] != null && fcp['Type'].value != null) {
+            compType = String(fcp['Type'].value);
+          }
+          break;
+        }
+      }
+    } catch (e) {}
+
     nodeMap[nf.id] = {
       id:          nf.id,
       type:        'frame',
@@ -560,8 +579,10 @@ async function scanFlowGraphV2() {
       height:      nf.height,
       trackSet:    counts.set,
       trackTotal:  counts.total,
-      status:      counts.total === 0 ? 'none' : counts.set === counts.total ? 'complete' : 'progress',
+      status:      (counts.set > 0 && counts.set === counts.total) ? 'complete' : 'none',
       connections: [],
+      componentName: compName,
+      componentType: compType,
     };
   }
 
@@ -681,9 +702,63 @@ async function scanFlowGraphV2() {
   var finalEdges = edgeList;
   var setConns   = finalEdges.filter(function(e) { return e.tokenKey; }).length;
 
+  // ── Detect Flows: BFS from in-degree-0 nodes ─────────────────────────
+  function detectFlows(nodes, edges) {
+    var inDegree = {};
+    for (var di = 0; di < nodes.length; di++) {
+      inDegree[nodes[di].id] = 0;
+    }
+    for (var ei = 0; ei < edges.length; ei++) {
+      var tid = edges[ei].toFrameId;
+      if (inDegree[tid] != null) {
+        inDegree[tid] = inDegree[tid] + 1;
+      }
+    }
+    var startNodes = nodes.filter(function(n) {
+      return inDegree[n.id] === 0 && n.connections.length > 0;
+    });
+    var flows = [];
+    for (var si = 0; si < startNodes.length; si++) {
+      var start = startNodes[si];
+      var visited = {};
+      var queue = [start.id];
+      var flowNodeIds = [];
+      while (queue.length > 0) {
+        var cur = queue.shift();
+        if (visited[cur]) continue;
+        visited[cur] = true;
+        flowNodeIds.push(cur);
+        var curNode = null;
+        for (var ni2 = 0; ni2 < nodes.length; ni2++) {
+          if (nodes[ni2].id === cur) { curNode = nodes[ni2]; break; }
+        }
+        if (curNode) {
+          for (var ci3 = 0; ci3 < curNode.connections.length; ci3++) {
+            var edgeId2 = curNode.connections[ci3];
+            var edgeObj = null;
+            for (var ei2 = 0; ei2 < edges.length; ei2++) {
+              if (edges[ei2].id === edgeId2) { edgeObj = edges[ei2]; break; }
+            }
+            if (edgeObj && !visited[edgeObj.toFrameId]) {
+              queue.push(edgeObj.toFrameId);
+            }
+          }
+        }
+      }
+      flows.push({
+        id:          'flow_' + si,
+        name:        start.name + ' Flow',
+        startNodeId: start.id,
+        nodeIds:     flowNodeIds,
+      });
+    }
+    return flows;
+  }
+
   return {
     nodes:            finalNodes,
     edges:            finalEdges,
+    flows:            detectFlows(finalNodes, finalEdges),
     totalConnections: finalEdges.length,
     motionSet:        setConns,
   };
@@ -854,7 +929,7 @@ async function generateMotionGuide(frameId) {
 async function handleSaveFrameData(payload) {
   await saveFrameData(payload.frameId, payload.data);
   const { set, total } = count7TrackMotions(payload.data);
-  const status = total === 0 ? 'none' : set === total ? 'complete' : 'progress';
+  const status = (set > 0 && set === total) ? 'complete' : 'none';
   figma.ui.postMessage({
     type: 'FRAME_STATUS_UPDATED',
     frameId: payload.frameId, trackSet: set, trackTotal: total, status,
@@ -879,7 +954,7 @@ async function addSelectionToFlow() {
     added.push({
       id: f.id, type: 'frame', name: f.name,
       trackSet: set, trackTotal: total,
-      status: total === 0 ? 'none' : set === total ? 'complete' : 'progress',
+      status: (set > 0 && set === total) ? 'complete' : 'none',
       connections: [],
     });
   }
