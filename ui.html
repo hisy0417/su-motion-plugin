@@ -268,6 +268,45 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:
 .wf-t{font-size:10px;color:var(--t2);line-height:1.5}
 .wf-t strong{color:var(--t1);display:block;font-weight:600}
 
+/* Collapsible section header */
+.rp-collapsible-hd{display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px;cursor:pointer;border-top:1px solid var(--b0);
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)}
+.rp-collapsible-hd:hover{background:var(--s2)}
+.rp-collapsible-body.collapsed{display:none}
+.rp-collapsible-body.expanded{display:block}
+/* Frame detail panel */
+.fd-section{padding:4px 10px 8px}
+.fd-comp-row{display:flex;align-items:center;gap:5px;padding:3px 0;
+  border-bottom:1px solid var(--b0);font-size:10px}
+.fd-comp-row:last-child{border-bottom:none}
+.fd-comp-icon{color:#7C3AED;font-size:9px;flex-shrink:0}
+.fd-comp-name{font-weight:600;color:var(--t0);max-width:80px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.fd-comp-path{color:var(--t3);font-size:9px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;flex:1;min-width:0}
+.fd-gesture{flex-shrink:0;font-size:9px;font-weight:700;
+  padding:1px 6px;border-radius:8px;background:var(--bd);color:var(--bhi)}
+.fd-empty{font-size:10px;color:var(--t3);padding:4px 0}
+/* Flow create mode — node selection */
+.fn.flow-selectable{outline:2px dashed #f59e0b;outline-offset:2px;cursor:crosshair!important}
+.fn.flow-selected{outline:2px solid #1a6eff!important;outline-offset:2px}
+.flow-create-banner{display:none;padding:6px 10px;border-top:1px solid var(--b1);gap:4px;flex-direction:column}
+.flow-create-banner.show{display:flex}
+.fl-create-hint{font-size:10px;color:var(--amber);padding:2px 0}
+.fl-create-btns{display:flex;gap:6px}
+.fl-btn-ok{flex:1;padding:5px;background:#1a6eff;border:none;border-radius:var(--r6);
+  color:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.fl-btn-cancel{flex:1;padding:5px;background:transparent;border:1px solid var(--b2);
+  border-radius:var(--r6);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--sans)}
+/* Flow play controls */
+.fl-play-row{display:flex;gap:4px;padding:4px 10px 6px}
+.fl-play-btn{flex:1;padding:4px 6px;border:1px solid var(--b2);border-radius:var(--r6);
+  background:transparent;color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--sans);
+  display:flex;align-items:center;justify-content:center;gap:3px}
+.fl-play-btn:hover{background:var(--s2);color:var(--t1)}
+.fl-play-btn.active{background:#1a6eff;color:#fff;border-color:#1a6eff}
+
 /* Flow empty */
 .flow-empty{position:absolute;inset:0;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:10px;pointer-events:none}
@@ -730,6 +769,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:
     </div>
   </div>
   <div class="flow-rp" id="flow-rp">
+    <!-- Selected Frame -->
     <div class="rp-hd">
       <div class="rp-sec-t">Selected Frame</div>
       <div class="rp-frame-card">
@@ -741,23 +781,62 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:
       </div>
       <button class="goto-btn" onclick="goToEditor()">Go to Editor →</button>
     </div>
+
+    <!-- Frame Detail: Component + Interaction (collapsible) -->
+    <div class="rp-collapsible-hd" id="fd-hd" onclick="toggleSection('fd')">
+      <span>Components &amp; Interactions</span>
+      <span id="fd-chev">\u25be</span>
+    </div>
+    <div class="rp-collapsible-body expanded" id="fd-body">
+      <div class="fd-section" id="fd-content">
+        <div class="fd-empty">Select a frame to inspect</div>
+      </div>
+    </div>
+
     <div class="rp-scroll">
+      <!-- Screen Flow connections -->
       <div class="rp-conn-hd" onclick="toggleConn()">
         <span class="screen-flow-badge"><span>Screen Flow</span><span class="rp-cnt" id="rp-cnt">0</span><span class="chevron">\u25be</span></span>
       </div>
       <div id="rp-conn-list"></div>
-      <div class="wf-list" style="margin-top:4px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Working Flow</div>
-        <div class="wf-item"><div class="wf-num">1</div><div class="wf-t"><strong>Connect Frames</strong>Connector line과 Touch gesture로 화면 구조 연결</div></div>
-        <div class="wf-item"><div class="wf-num">2</div><div class="wf-t"><strong>Auto Scan</strong>노드 구조로 모션 설정 현황 파악. 복수 선택된 노드로 Flow 생성 및 Figma prototype 저장 가능</div></div>
-        <div class="wf-item"><div class="wf-num">3</div><div class="wf-t"><strong>더블클릭 → Editor</strong>Hi-fi prototyping 및 prototyping preview</div></div>
-        <div class="wf-item"><div class="wf-num">4</div><div class="wf-t"><strong>Motion Guide 생성</strong>Flow 및 Editor에서 적용된 수치를 Figma 화면에 자동 가이드 생성</div></div>
+
+      <!-- Flow List (collapsible) -->
+      <div class="rp-collapsible-hd" id="fl-hd" onclick="toggleSection('fl')">
+        <span>Flow List</span>
+        <span id="fl-chev">\u25be</span>
       </div>
-      <div id="flow-list-section" style="margin-top:8px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:4px">Flow List</div>
-        <div id="fl-list" style="display:flex;flex-direction:column;gap:3px"></div>
-        <div style="margin-top:4px">
-          <button id="fl-create-btn" style="width:100%;padding:5px 8px;background:transparent;border:1px dashed var(--b2);border-radius:var(--r6);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--sans);text-align:left">+ Create Flow</button>
+      <div class="rp-collapsible-body expanded" id="fl-body">
+        <!-- Play controls -->
+        <div class="fl-play-row">
+          <button class="fl-play-btn" id="fl-play-flow-btn" onclick="playFlow()" title="Play selected flow">\u25b6 Play Flow</button>
+          <button class="fl-play-btn" id="fl-play-all-btn" onclick="playAllFlow()" title="Play all frames">\u25b6 Play All</button>
+        </div>
+        <div id="fl-list" style="padding:0 10px 4px;display:flex;flex-direction:column;gap:3px"></div>
+        <!-- Create Flow bar -->
+        <div style="padding:4px 10px 6px">
+          <button id="btn-create-flow" style="width:100%;padding:5px 8px;background:transparent;border:1px dashed var(--b2);border-radius:var(--r6);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--sans);text-align:left">+ Create Flow</button>
+        </div>
+        <!-- Create mode confirm bar (hidden until active) -->
+        <div class="flow-create-banner" id="flow-create-banner">
+          <div class="fl-create-hint">\u2714 Click nodes to select, then confirm</div>
+          <div class="fl-create-btns">
+            <button class="fl-btn-cancel" onclick="cancelCreateFlow()">Cancel</button>
+            <button id="btn-flow-confirm" class="fl-btn-ok" onclick="confirmCreateFlow()">Create Flow</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Working Flow guide (collapsible, collapsed by default) -->
+      <div class="rp-collapsible-hd" id="wf-hd">
+        <span>Info Guide</span>
+        <span id="wf-chev">\u25b8</span>
+      </div>
+      <div class="rp-collapsible-body collapsed" id="wf-body">
+        <div class="wf-list">
+          <div class="wf-item"><div class="wf-num">1</div><div class="wf-t"><strong>Connect Frames</strong>Connector line과 Touch gesture로 화면 구조 연결</div></div>
+          <div class="wf-item"><div class="wf-num">2</div><div class="wf-t"><strong>Auto Scan</strong>노드 구조로 모션 설정 현황 파악</div></div>
+          <div class="wf-item"><div class="wf-num">3</div><div class="wf-t"><strong>더블클릭 → Editor</strong>Hi-fi prototyping 및 prototyping preview</div></div>
+          <div class="wf-item"><div class="wf-num">4</div><div class="wf-t"><strong>Motion Guide 생성</strong>Flow 및 Editor에서 적용된 수치를 Figma 화면에 자동 가이드 생성</div></div>
         </div>
       </div>
     </div>
@@ -1337,56 +1416,49 @@ function _renderFlow() {
 
 function _computeLayout() {
   _layout.clear();
-  var FW = 180, FH = 100, CW = 96, CH = 64;
-  var COL_GAP = 92, ROW_GAP = 48, SX = 32, SY = 32;
+
+  var FW = 180, FH = 120, CW = 96, CH = 64;
+  var SCALE = 0.18, START_X = 60, START_Y = 80;
 
   var frameNodes = [];
   var condNodes  = [];
   _graph.nodes.forEach(function(n) {
-    if (n.type === 'frame')     frameNodes.push(n);
+    if (n.type === 'frame')          frameNodes.push(n);
     else if (n.type === 'condition') condNodes.push(n);
   });
 
-  // ── Step 1: group frames by depth (canvas column) ───────────────────
-  var columns = {};
-  frameNodes.forEach(function(node) {
-    var d = (node.depth != null ? node.depth : 1);
-    if (!columns[d]) columns[d] = [];
-    columns[d].push(node);
+  // ── Compute min absoluteX/Y across all frame nodes ───────────────────
+  var minX = Infinity, minY = Infinity;
+  frameNodes.forEach(function(n) {
+    var ax = (n.absoluteX != null ? n.absoluteX : 0);
+    var ay = (n.absoluteY != null ? n.absoluteY : 0);
+    if (ax < minX) minX = ax;
+    if (ay < minY) minY = ay;
   });
+  if (!isFinite(minX)) minX = 0;
+  if (!isFinite(minY)) minY = 0;
 
-  // ── Step 2: sort each column by absoluteY (canvas vertical order) ───
-  Object.keys(columns).forEach(function(d) {
-    columns[d].sort(function(a, b) {
-      return ((a.absoluteY != null ? a.absoluteY : 0)) - ((b.absoluteY != null ? b.absoluteY : 0));
-    });
-  });
-
-  // ── Step 3: map depth → X, rank within column → Y ───────────────────
+  // ── Map Figma canvas coords → plugin canvas coords ───────────────────
   var posMap = {};
-  var depthKeys = Object.keys(columns).map(Number).sort(function(a, b) { return a - b; });
-  depthKeys.forEach(function(d, colIdx) {
-    var x = SX + colIdx * (FW + COL_GAP);
-    columns[d].forEach(function(node, rowIdx) {
-      var y = SY + rowIdx * (FH + ROW_GAP);
-      posMap[node.id] = { x: x, y: y, w: FW, h: FH };
-    });
+  frameNodes.forEach(function(n) {
+    var ax = (n.absoluteX != null ? n.absoluteX : 0);
+    var ay = (n.absoluteY != null ? n.absoluteY : 0);
+    var px = (ax - minX) * SCALE + START_X;
+    var py = (ay - minY) * SCALE + START_Y;
+    posMap[n.id] = { x: px, y: py, w: FW, h: FH };
   });
 
   // Apply posMap to _layout
   Object.keys(posMap).forEach(function(id) { _layout.set(id, posMap[id]); });
 
-  // Restore user-dragged positions (overrides computed layout)
+  // Restore user-dragged positions
   Object.keys(userNodePositions).forEach(function(nid) {
     var saved = userNodePositions[nid];
     var existing = _layout.get(nid);
-    if (existing && saved) {
-      existing.x = saved.x;
-      existing.y = saved.y;
-    }
+    if (existing && saved) { existing.x = saved.x; existing.y = saved.y; }
   });
 
-  // ── Step 4: SVG canvas auto-resize ──────────────────────────────────
+  // SVG canvas auto-resize
   var maxX = 0, maxY = 0;
   Object.values(posMap).forEach(function(pos) {
     if (pos.x + pos.w > maxX) maxX = pos.x + pos.w;
@@ -1394,24 +1466,23 @@ function _computeLayout() {
   });
   var svgEl = document.getElementById('flow-svg');
   if (svgEl) {
-    svgEl.setAttribute('width',  String(maxX + 60));
-    svgEl.setAttribute('height', String(maxY + 60));
+    svgEl.setAttribute('width',  String(maxX + 120));
+    svgEl.setAttribute('height', String(maxY + 120));
   }
   var canvasEl = document.getElementById('flow-canvas');
   if (canvasEl) {
-    canvasEl.style.minWidth  = String(maxX + 60) + 'px';
-    canvasEl.style.minHeight = String(maxY + 60) + 'px';
+    canvasEl.style.minWidth  = String(maxX + 120) + 'px';
+    canvasEl.style.minHeight = String(maxY + 120) + 'px';
   }
 
-  // ── Step 5: position condition nodes between adjacent frames ─────────
-  var curX = SX + depthKeys.length * (FW + COL_GAP);
+  // Condition nodes: place between adjacent frames
   condNodes.forEach(function(cn) {
-    var refEdge  = null;
+    var refEdge = null;
     _graph.edges.forEach(function(e) { if (!refEdge && e.toId === cn.id) refEdge = e; });
-    var fromPos  = refEdge ? _layout.get(refEdge.fromId) : null;
-    var cx = fromPos ? fromPos.x + fromPos.w + COL_GAP * 0.5 : curX;
-    var cy = fromPos ? fromPos.y + fromPos.h / 2 - CH / 2   : SY + 80;
-    _layout.set(cn.id, { x: cx, y: cy, w: CW, h: CH });
+    var fromPos = refEdge ? _layout.get(refEdge.fromId) : null;
+    var cx2 = fromPos ? fromPos.x + fromPos.w + 60 : START_X;
+    var cy2 = fromPos ? fromPos.y + fromPos.h / 2 - CH / 2 : START_Y + 80;
+    _layout.set(cn.id, { x: cx2, y: cy2, w: CW, h: CH });
   });
 }
 
@@ -1505,9 +1576,24 @@ function _drawNodes() {
 
       el.innerHTML = hdHtml + compHtml + dropHtml;
 
-      // Click: select / dropdown toggle
+      // Click: select / dropdown toggle / create-flow pick
       el.addEventListener('click', function(ev) {
         ev.stopPropagation();
+        // Flow create mode: toggle pick selection
+        if (_flowCreateMode) {
+          var nid2 = this.dataset.nid;
+          var idx = _flowPickedIds.indexOf(nid2);
+          if (idx === -1) {
+            _flowPickedIds.push(nid2);
+            this.classList.add('flow-selected');
+            this.classList.remove('flow-selectable');
+          } else {
+            _flowPickedIds.splice(idx, 1);
+            this.classList.remove('flow-selected');
+            this.classList.add('flow-selectable');
+          }
+          return;
+        }
         var hd = ev.target.closest('.fn-drop-hd');
         if (hd) {
           var bid = hd.dataset.dropid;
@@ -1561,7 +1647,7 @@ function _drawEdges() {
   svg.innerHTML = '';
   layer.querySelectorAll('.edge-chip,.branch-lbl').forEach(function(el) { el.remove(); });
 
-  // Arrow marker defs — 2-state: set=#11A85F, unset=#67696F
+  // Arrow marker defs — 2-state
   var defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
   [['em','#11A85F'],['eu','#67696F']].forEach(function(pair) {
     var mid = pair[0], mclr = pair[1];
@@ -1574,6 +1660,10 @@ function _drawEdges() {
   });
   svg.appendChild(defs);
 
+  // Collect all positions for chip collision detection
+  var allPos = [];
+  _layout.forEach(function(p) { allPos.push(p); });
+
   _graph.edges.forEach(function(edge) {
     var fp = _layout.get(edge.fromId), tp = _layout.get(edge.toId);
     if (!fp || !tp) return;
@@ -1581,48 +1671,75 @@ function _drawEdges() {
     var fx = fp.x + fp.w, fy = fp.y + fp.h / 2;
     var tx = tp.x,        ty = tp.y + tp.h / 2;
     var hasToken = !!(edge.tokenKey);
+    var strokeClr = hasToken ? '#11A85F' : '#BBBBBB';
+    var markerSfx = hasToken ? 'em' : 'eu';
 
-    // 2-state color: token set → #11A85F, unset → #67696F
-    var strokeClr  = hasToken ? '#11A85F' : '#67696F';
-    var markerSfx  = hasToken ? 'em' : 'eu';
+    // Cubic bezier control points
+    var cx1 = fx + (tx - fx) * 0.5;
+    var cy1 = fy;
+    var cx2 = fx + (tx - fx) * 0.5;
+    var cy2 = ty;
 
-    // Bent connector (꺾인 직각 선)
-    var midX = fx + (tx - fx) / 2;
+    // Draw curve
     var path = document.createElementNS('http://www.w3.org/2000/svg','path');
     path.setAttribute('d',
       'M ' + fx + ' ' + fy +
-      ' L ' + midX + ' ' + fy +
-      ' L ' + midX + ' ' + ty +
-      ' L ' + tx + ' ' + ty
+      ' C ' + cx1 + ' ' + cy1 +
+      ' ' + cx2 + ' ' + cy2 +
+      ' ' + tx + ' ' + ty
     );
     path.setAttribute('fill','none');
     path.setAttribute('stroke', strokeClr);
-    path.setAttribute('stroke-width', hasToken ? '1.8' : '1.4');
+    path.setAttribute('stroke-width','1.5');
+    path.setAttribute('stroke-dasharray','6 4');
     path.setAttribute('stroke-linecap','round');
-    path.setAttribute('stroke-linejoin','round');
-    if (!hasToken) path.setAttribute('stroke-dasharray','4 3');
     path.setAttribute('marker-end','url(#' + markerSfx + ')');
     svg.appendChild(path);
 
-    // Edge chip icon — position at midpoint with card-overlap safety
-    var mx = (fx + tx) / 2, my = (fy + ty) / 2;
-    // 카드 영역 겹침 방지: fromFrame 하단 + 8px ~ toFrame 상단 - 8px 사이 유지
-    if (fp && tp) {
-      var safeMinY = fp.y + fp.h + 8;
-      var safeMaxY = tp.y - 8;
-      if (safeMaxY > safeMinY) {
-        if (my < safeMinY) my = safeMinY;
-        if (my > safeMaxY) my = safeMaxY;
-      }
+    // Start point circle marker (◎ style)
+    var startCircle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    startCircle.setAttribute('cx', String(fx));
+    startCircle.setAttribute('cy', String(fy));
+    startCircle.setAttribute('r', '6');
+    startCircle.setAttribute('fill', 'white');
+    startCircle.setAttribute('stroke', strokeClr);
+    startCircle.setAttribute('stroke-width', '2');
+    svg.appendChild(startCircle);
+    var centerDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    centerDot.setAttribute('cx', String(fx));
+    centerDot.setAttribute('cy', String(fy));
+    centerDot.setAttribute('r', '2.5');
+    centerDot.setAttribute('fill', strokeClr);
+    svg.appendChild(centerDot);
+
+    // Chip position: bezier t=0.35, with collision fallback to t=0.5
+    function bezierPt(t) {
+      var mt = 1 - t;
+      return {
+        x: mt*mt*mt*fx + 3*mt*mt*t*cx1 + 3*mt*t*t*cx2 + t*t*t*tx,
+        y: mt*mt*mt*fy + 3*mt*mt*t*cy1 + 3*mt*t*t*cy2 + t*t*t*ty,
+      };
     }
+    var pt = bezierPt(0.35);
+    var chipX = pt.x - 12, chipY = pt.y - 10;
+    var collision = allPos.some(function(pos) {
+      return chipX > pos.x - 10 && chipX < pos.x + pos.w + 10 &&
+             chipY > pos.y - 10 && chipY < pos.y + pos.h + 10;
+    });
+    if (collision) {
+      pt = bezierPt(0.5);
+      chipX = pt.x - 12;
+      chipY = pt.y - 10;
+    }
+
     var chip = document.createElement('div');
     if (hasToken) {
       chip.className = 'edge-chip set';
-      chip.style.cssText = 'left:' + mx + 'px;top:' + my + 'px;background:#11A85F;color:#fff;border:none';
+      chip.style.cssText = 'left:' + chipX + 'px;top:' + chipY + 'px;background:#11A85F;color:#fff;border:none';
       chip.textContent = '\u25be';
     } else {
       chip.className = 'edge-chip unset';
-      chip.style.cssText = 'left:' + mx + 'px;top:' + my + 'px;background:transparent;color:#67696F;border:1px solid #67696F';
+      chip.style.cssText = 'left:' + chipX + 'px;top:' + chipY + 'px;background:transparent;color:#67696F;border:1px solid #67696F';
       chip.textContent = '+';
     }
     chip.dataset.eid = edge.id;
@@ -1636,7 +1753,7 @@ function _drawEdges() {
       var lbl = document.createElement('div');
       var isYes = edge.branchLabel === 'Yes';
       lbl.className = 'branch-lbl ' + (isYes ? 'bl-yes' : 'bl-no');
-      lbl.style.cssText = 'left:' + (mx + 22) + 'px;top:' + (my - 14) + 'px';
+      lbl.style.cssText = 'left:' + (chipX + 22) + 'px;top:' + (chipY - 14) + 'px';
       lbl.textContent = edge.branchLabel;
       layer.appendChild(lbl);
     }
@@ -1645,34 +1762,69 @@ function _drawEdges() {
 
 function _selectNode(id) {
   _selNodeId = id;
-  document.querySelectorAll('.fn').forEach(el => el.classList.toggle('sel', el.dataset.nid === id));
-  const node = _graph.nodes.get(id);
+  document.querySelectorAll('.fn').forEach(function(el) { el.classList.toggle('sel', el.dataset.nid === id); });
+  var node = _graph.nodes.get(id);
   if (!node) return;
-  const badgeText = node.trackTotal === 0 ? 'None'
-    : node.status === 'complete' ? node.trackSet + ' motion set'
-    : node.trackSet + ' / ' + node.trackTotal + ' set';
+  var badgeText = node.status === 'complete' ? 'Complete' : 'None';
   document.getElementById('rfc-name').textContent  = node.name.replace('\n',' ');
   document.getElementById('rfc-meta').textContent  = node.id;
-  const badge = document.getElementById('rfc-badge');
+  var badge = document.getElementById('rfc-badge');
   badge.className = 'rfc-badge ' + (node.status === 'none' ? 'none' : node.status);
   badge.textContent = badgeText;
 
+  // Frame detail: render from nodeMap interactions if available, else request scan
+  var fdContent = document.getElementById('fd-content');
+  if (fdContent) {
+    fdContent.innerHTML = '';
+    var interactions = (node.interactions != null ? node.interactions : []);
+    if (interactions.length > 0) {
+      _renderFrameDetail(interactions);
+    } else {
+      fdContent.innerHTML = '<div class="fd-empty">Scanning...</div>';
+      try {
+        parent.postMessage({ pluginMessage: { type: 'GET_FRAME_DETAIL', frameId: id } }, '*');
+      } catch (e) {}
+    }
+  }
+
   // Populate connections list
-  const list = document.getElementById('rp-conn-list');
+  var list = document.getElementById('rp-conn-list');
   list.innerHTML = '';
-  const outEdges = [..._graph.edges.values()].filter(e => e.fromId === id);
+  var outEdges = [];
+  _graph.edges.forEach(function(e) { if (e.fromId === id) outEdges.push(e); });
   document.getElementById('rp-cnt').textContent = outEdges.length;
-  outEdges.forEach(e => {
-    const toNode = _graph.nodes.get(e.toId);
-    const row = document.createElement('div');
+  outEdges.forEach(function(e) {
+    var toNode = _graph.nodes.get(e.toId);
+    var row = document.createElement('div');
     row.className = 'rp-conn-row';
-    row.innerHTML = '<span class="rp-carr">→</span>' +
+    row.innerHTML = '<span class="rp-carr">\u2192</span>' +
       '<span class="rp-cfr">#&nbsp;' + _e((toNode && toNode.name ? toNode.name.replace('\n',' ') : null) || e.toId) + '</span>' +
       '<span class="rp-ctok ' + (e.tokenKey ? '' : 'none') + '">' +
-        (e.tokenKey ? e.tokenKey.split('.').slice(-2).join('.') : '—') + '</span>';
-    row.addEventListener('click', () => openTokPopup(e.id, 200, 200));
+        (e.tokenKey ? e.tokenKey.split('.').slice(-2).join('.') : '\u2014') + '</span>';
+    row.addEventListener('click', function() { openTokPopup(e.id, 200, 200); });
     list.appendChild(row);
   });
+}
+
+function _renderFrameDetail(interactions) {
+  var fdContent = document.getElementById('fd-content');
+  if (!fdContent) return;
+  fdContent.innerHTML = '';
+  if (!interactions || interactions.length === 0) {
+    fdContent.innerHTML = '<div class="fd-empty">No interactions found</div>';
+    return;
+  }
+  for (var i = 0; i < interactions.length; i++) {
+    var ia = interactions[i];
+    var row = document.createElement('div');
+    row.className = 'fd-comp-row';
+    row.innerHTML =
+      '<span class="fd-comp-icon">\u2736</span>' +
+      '<span class="fd-comp-name" title="' + _e(ia.componentName) + '">' + _e(ia.componentName) + '</span>' +
+      '<span class="fd-comp-path">' + _e(ia.isTouchGesture ? 'Touch gesture' : (ia.path || '')) + '</span>' +
+      '<span class="fd-gesture">' + _e(ia.gestureType || ia.gestureRaw || '') + '</span>';
+    fdContent.appendChild(row);
+  }
 }
 
 /* Canvas pan + zoom */
@@ -1791,12 +1943,95 @@ function doScan() {
   setTimeout(() => { loadMockFlow(); }, 800);
 }
 function toggleConn() {
-  const list = document.getElementById('rp-conn-list');
-  const chev = document.getElementById('rp-chev');
-  const open = list.style.display !== 'none';
+  var list = document.getElementById('rp-conn-list');
+  var open = list.style.display !== 'none';
   list.style.display = open ? 'none' : '';
-  chev.textContent = open ? '▸' : '▾';
 }
+
+// ── Collapsible section toggle ────────────────────────────────────────
+function toggleSection(key) {
+  var body = document.getElementById(key + '-body');
+  var chev = document.getElementById(key + '-chev');
+  if (!body) return;
+  var isExpanded = body.classList.contains('expanded');
+  body.classList.toggle('expanded', !isExpanded);
+  body.classList.toggle('collapsed', isExpanded);
+  if (chev) chev.textContent = isExpanded ? '\u25b8' : '\u25be';
+}
+
+// ── Flow Create Mode ──────────────────────────────────────────────────
+var _flowCreateMode = false;
+var _flowPickedIds  = [];
+
+function startCreateFlow() {
+  _flowCreateMode = true;
+  _flowPickedIds  = [];
+  var bar = document.getElementById('flow-create-banner');
+  if (bar) bar.classList.add('show');
+  var btn = document.getElementById('btn-create-flow');
+  if (btn) btn.style.display = 'none';
+  document.querySelectorAll('.fn').forEach(function(el) {
+    el.classList.add('flow-selectable');
+  });
+}
+
+function cancelCreateFlow() {
+  _flowCreateMode = false;
+  _flowPickedIds  = [];
+  var bar = document.getElementById('flow-create-banner');
+  if (bar) bar.classList.remove('show');
+  var btn = document.getElementById('btn-create-flow');
+  if (btn) btn.style.display = '';
+  document.querySelectorAll('.fn').forEach(function(el) {
+    el.classList.remove('flow-selectable');
+    el.classList.remove('flow-selected');
+    el.style.outline = '';
+    el.style.outlineOffset = '';
+  });
+}
+
+function confirmCreateFlow() {
+  if (_flowPickedIds.length === 0) { cancelCreateFlow(); return; }
+  var firstNode = _graph.nodes.get(_flowPickedIds[0]);
+  var defaultName = firstNode ? (firstNode.name.replace('\n',' ') + ' Flow') : 'New Flow';
+  var flowName = window.prompt('Flow 이름을 입력하세요:', defaultName);
+  if (!flowName) return;
+  var newFlow = {
+    id:          'flow_custom_' + Date.now(),
+    name:        flowName,
+    startNodeId: _flowPickedIds[0],
+    nodeIds:     _flowPickedIds.slice(),
+  };
+  _flows.push(newFlow);
+  renderFlowList();
+  try { parent.postMessage({ pluginMessage: { type: 'SAVE_FLOWS', flows: _flows } }, '*'); } catch (e) {}
+  cancelCreateFlow();
+}
+
+// ── Flow Play ─────────────────────────────────────────────────────────
+function playFlow() {
+  if (!_activeFlowId) return;
+  var activeFlow = null;
+  for (var i = 0; i < _flows.length; i++) {
+    if (_flows[i].id === _activeFlowId) { activeFlow = _flows[i]; break; }
+  }
+  if (!activeFlow) return;
+  document.querySelectorAll('.fn').forEach(function(el) {
+    el.style.opacity = activeFlow.nodeIds.indexOf(el.dataset.nid) !== -1 ? '1' : '0.25';
+  });
+  var btn = document.getElementById('fl-play-flow-btn');
+  if (btn) btn.classList.add('active');
+  var firstId = activeFlow.nodeIds[0];
+  if (firstId) { _selNodeId = firstId; goToEditor(); }
+}
+
+function playAllFlow() {
+  document.querySelectorAll('.fn').forEach(function(el) { el.style.opacity = '1'; });
+  var btn = document.getElementById('fl-play-all-btn');
+  if (btn) { btn.classList.add('active'); setTimeout(function() { btn.classList.remove('active'); }, 800); }
+  goToEditor();
+}
+
 // ── Drag & Drop document-level handlers ─────────────────────────────
 document.addEventListener('mousemove', function(ev) {
   if (!dragState.dragging || !dragState.nodeId) return;
@@ -1804,19 +2039,10 @@ document.addEventListener('mousemove', function(ev) {
   var dy = (ev.clientY - dragState.startMouseY) / _scale;
   var newX = dragState.startNodeX + dx;
   var newY = dragState.startNodeY + dy;
-  // Update _layout in place
   var pos = _layout.get(dragState.nodeId);
-  if (pos) {
-    pos.x = newX;
-    pos.y = newY;
-  }
-  // Move DOM element directly (fast, no full re-render)
+  if (pos) { pos.x = newX; pos.y = newY; }
   var nodeEl = document.querySelector('[data-nid="' + dragState.nodeId + '"]');
-  if (nodeEl) {
-    nodeEl.style.left = newX + 'px';
-    nodeEl.style.top  = newY + 'px';
-  }
-  // Redraw edges only
+  if (nodeEl) { nodeEl.style.left = newX + 'px'; nodeEl.style.top = newY + 'px'; }
   _drawEdges();
 });
 
@@ -1824,15 +2050,9 @@ document.addEventListener('mouseup', function(ev) {
   if (!dragState.dragging) return;
   var nid = dragState.nodeId;
   var pos = _layout.get(nid);
-  if (pos) {
-    userNodePositions[nid] = { x: pos.x, y: pos.y };
-  }
-  // Reset cursor on released element
+  if (pos) userNodePositions[nid] = { x: pos.x, y: pos.y };
   var nodeEl = document.querySelector('[data-nid="' + nid + '"]');
-  if (nodeEl) {
-    nodeEl.style.zIndex = '';
-    nodeEl.style.cursor = '';
-  }
+  if (nodeEl) { nodeEl.style.zIndex = ''; nodeEl.style.cursor = ''; }
   dragState.dragging = false;
   dragState.nodeId   = null;
 });
@@ -1841,66 +2061,41 @@ function renderFlowList() {
   var listEl = document.getElementById('fl-list');
   if (!listEl) return;
   listEl.innerHTML = '';
+
   if (!_flows || _flows.length === 0) {
     listEl.innerHTML = '<div style="font-size:10px;color:var(--t3);padding:2px 0">No flows detected</div>';
-    return;
-  }
-  for (var fi = 0; fi < _flows.length; fi++) {
-    var fl = _flows[fi];
-    var item = document.createElement('div');
-    item.className = 'fl-item' + (_activeFlowId === fl.id ? ' active' : '');
-    item.dataset.fid = fl.id;
-    item.innerHTML =
-      '<span>\u25b6 ' + _e(fl.name) + '</span>' +
-      '<span class="fl-edit" data-fid="' + fl.id + '">\u270e</span>';
-    item.addEventListener('click', function(ev) {
-      ev.stopPropagation();
-      var fid = this.dataset.fid;
-      _activeFlowId = (_activeFlowId === fid ? null : fid);
-      renderFlowList();
-      // Highlight only flow nodes, dim others
-      var activeFlow = null;
-      for (var i = 0; i < _flows.length; i++) {
-        if (_flows[i].id === _activeFlowId) { activeFlow = _flows[i]; break; }
-      }
-      document.querySelectorAll('.fn').forEach(function(el) {
-        if (!activeFlow) {
-          el.style.opacity = '1';
-        } else {
-          el.style.opacity = activeFlow.nodeIds.indexOf(el.dataset.nid) !== -1 ? '1' : '0.25';
-        }
-      });
-    });
-    listEl.appendChild(item);
+  } else {
+    for (var fi = 0; fi < _flows.length; fi++) {
+      var fl = _flows[fi];
+      (function(flow) {
+        var item = document.createElement('div');
+        item.className = 'fl-item' + (_activeFlowId === flow.id ? ' active' : '');
+        item.dataset.fid = flow.id;
+        item.innerHTML =
+          '<span>\u25b6 ' + _e(flow.name) + '</span>' +
+          '<span class="fl-edit">' + flow.nodeIds.length + '</span>';
+        item.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          _activeFlowId = (_activeFlowId === flow.id ? null : flow.id);
+          renderFlowList();
+          var activeFlow = null;
+          for (var i = 0; i < _flows.length; i++) {
+            if (_flows[i].id === _activeFlowId) { activeFlow = _flows[i]; break; }
+          }
+          document.querySelectorAll('.fn').forEach(function(el) {
+            el.style.opacity = (!activeFlow || activeFlow.nodeIds.indexOf(el.dataset.nid) !== -1) ? '1' : '0.25';
+          });
+        });
+        listEl.appendChild(item);
+      })(fl);
+    }
   }
 
-  // Create Flow button handler
-  var createBtn = document.getElementById('fl-create-btn');
+  // Bind Create Flow button once
+  var createBtn = document.getElementById('btn-create-flow');
   if (createBtn && !createBtn._bound) {
     createBtn._bound = true;
-    createBtn.addEventListener('click', function() {
-      var name = window.prompt('Flow name:', 'New Flow');
-      if (!name) return;
-      var selectedIds = [];
-      _graph.nodes.forEach(function(n) {
-        if (n.type === 'frame') selectedIds.push(n.id);
-      });
-      var newFlow = {
-        id:          'flow_custom_' + Date.now(),
-        name:        name,
-        startNodeId: selectedIds[0] || '',
-        nodeIds:     selectedIds,
-      };
-      _flows.push(newFlow);
-      renderFlowList();
-      try {
-        parent.postMessage({ pluginMessage: {
-          type: 'SAVE_FRAME_DATA',
-          frameId: '__flows__',
-          data: { flows: _flows },
-        }}, '*');
-      } catch (e) {}
-    });
+    createBtn.addEventListener('click', function() { startCreateFlow(); });
   }
 }
 function _updateStatusBar() {
@@ -3204,6 +3399,19 @@ window.onmessage = event => {
       break;
     }
 
+    case 'FRAME_DETAIL': {
+      // Update node's interactions in graph
+      if (msg.frameId && msg.components) {
+        var dNode = _graph.nodes.get(msg.frameId);
+        if (dNode) dNode.interactions = msg.components;
+      }
+      // Render if this frame is currently selected
+      if (msg.frameId === _selNodeId) {
+        _renderFrameDetail(msg.components || []);
+      }
+      break;
+    }
+
     case 'CONNECTOR_SELECTED': {
       // Highlight the edge corresponding to the selected connector
       var matchEdge = null;
@@ -3653,6 +3861,11 @@ function doScan() {
     setTimeout(() => { loadMockFlow(); }, 800);
   }
 }
+
+// Working Flow 패널 토글 — inline onclick 대신 addEventListener 사용
+document.getElementById('wf-hd').addEventListener('click', function() {
+  toggleSection('wf');
+});
 </script>
 
 </body>
