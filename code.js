@@ -20,8 +20,8 @@ const MAX_LAYERS_DEPTH    = 6;               // max layer tree depth to traverse
 
 // ── Plugin bootstrap ──────────────────────────────────────────────────
 figma.showUI(__html__, {
-  width:      960,
-  height:     600,
+  width:      1200,
+  height:     700,
   themeColors: true,
 });
 
