@@ -128,6 +128,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);
 .fn-badge.st-progress{background:var(--od);color:var(--orange);border:1px solid var(--ob)}
 .fn-badge.st-none{background:rgba(255,255,255,.04);color:var(--t3);border:1px solid var(--b1)}
 .fn-bdot{width:4px;height:4px;border-radius:50%;background:currentColor}
+.fn-comp{padding:5px 10px 6px;font-size:10px;color:var(--t2);border-top:1px solid var(--b1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fn-comp-ico{color:var(--t3);margin-right:3px}
+.fn-drop-hd{padding:5px 10px 5px;display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;border-top:1px solid var(--b1);font-size:10px;color:var(--t2)}
+.fn-drop-hd:hover{background:var(--s3)}
+.fn-drop-body{display:none;padding:4px 10px 6px;display:flex;flex-direction:column;gap:3px}
+.fn-drop-body.open{display:flex}
+.fn-drop-row{font-size:10px;color:var(--t2);display:flex;align-items:center;gap:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fn-drop-arr{color:var(--t3);flex-shrink:0}
+.fn-drop-tok{color:var(--t3);font-size:9px;flex-shrink:0}
+.fl-item{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;
+  background:var(--s2);border:1px solid var(--b1);border-radius:var(--r4);cursor:pointer;
+  font-size:10px;color:var(--t1)}
+.fl-item:hover{border-color:var(--b2);background:var(--s3)}
+.fl-item.active{border-color:var(--bhi);color:var(--blue)}
+.fl-edit{font-size:10px;color:var(--t3);padding:2px 4px;cursor:pointer}
+.fl-edit:hover{color:var(--t1)}
 
 /* ConditionNode (diamond) */
 .cond-wrap{position:absolute;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -715,10 +734,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);
       <div id="rp-conn-list"></div>
       <div class="wf-list" style="margin-top:4px">
         <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:2px">Working Flow</div>
-        <div class="wf-item"><div class="wf-num">1</div><div class="wf-t"><strong>Connect Frames</strong>Prototype 탭에서 연결</div></div>
-        <div class="wf-item"><div class="wf-num">2</div><div class="wf-t"><strong>Auto-Scan</strong>모션 설정 현황 파악</div></div>
-        <div class="wf-item"><div class="wf-num">3</div><div class="wf-t"><strong>더블클릭 → Editor</strong>7-Track Timeline 설정</div></div>
-        <div class="wf-item"><div class="wf-num">4</div><div class="wf-t"><strong>Motion Guide 생성</strong>캔버스 주석 자동 생성</div></div>
+        <div class="wf-item"><div class="wf-num">1</div><div class="wf-t"><strong>Connect Frames</strong>Connector line과 Touch gesture로 화면 구조 연결</div></div>
+        <div class="wf-item"><div class="wf-num">2</div><div class="wf-t"><strong>Auto Scan</strong>노드 구조로 모션 설정 현황 파악. 복수 선택된 노드로 Flow 생성 및 Figma prototype 저장 가능</div></div>
+        <div class="wf-item"><div class="wf-num">3</div><div class="wf-t"><strong>더블클릭 → Editor</strong>Hi-fi prototyping 및 prototyping preview</div></div>
+        <div class="wf-item"><div class="wf-num">4</div><div class="wf-t"><strong>Motion Guide 생성</strong>Flow 및 Editor에서 적용된 수치를 Figma 화면에 자동 가이드 생성</div></div>
+      </div>
+      <div id="flow-list-section" style="margin-top:8px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:4px">Flow List</div>
+        <div id="fl-list" style="display:flex;flex-direction:column;gap:3px"></div>
+        <div style="margin-top:4px">
+          <button id="fl-create-btn" style="width:100%;padding:5px 8px;background:transparent;border:1px dashed var(--b2);border-radius:var(--r6);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--sans);text-align:left">+ Create Flow</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1263,6 +1289,8 @@ let _layout   = new Map();    // nodeId → {x,y,w,h}
 let _scale    = 1, _tx = 40, _ty = 40;
 let _selNodeId = null;
 let _activeEdgeId = null;     // for token popup
+let _flows    = [];           // detected flows
+let _activeFlowId = null;     // highlighted flow
 
 function loadMockFlow() {
   _graph.nodes.clear(); _graph.edges.clear();
@@ -1353,62 +1381,105 @@ function _computeLayout() {
 }
 
 function _drawNodes() {
-  const layer = document.getElementById('nodes-layer');
+  var layer = document.getElementById('nodes-layer');
   layer.innerHTML = '';
 
-  _graph.nodes.forEach(node => {
-    const pos = _layout.get(node.id);
+  _graph.nodes.forEach(function(node) {
+    var pos = _layout.get(node.id);
     if (!pos) return;
 
     if (node.type === 'frame') {
-      const el = document.createElement('div');
+      var el = document.createElement('div');
       el.className = 'fn st-' + node.status + (node.id === _selNodeId ? ' sel' : '');
       el.dataset.nid = node.id;
       el.style.cssText = 'left:' + pos.x + 'px;top:' + pos.y + 'px;width:' + pos.w + 'px';
-      const badgeText = node.trackTotal === 0 ? 'None'
-        : node.status === 'complete' ? node.trackSet + ' motion set'
-        : node.trackSet + ' / ' + node.trackTotal + ' set';
-      el.innerHTML =
+
+      // Header row
+      var hdHtml =
         '<div class="fn-hd">' +
           '<span class="fn-hash">#</span>' +
           '<span class="fn-name" title="' + _e(node.name) + '">' + _e(node.name) + '</span>' +
           '<span class="fn-dot st-' + node.status + '"></span>' +
-        '</div>' +
-        '<div class="fn-body">' +
-          '<span class="fn-badge st-' + node.status + '">' +
-            '<span class="fn-bdot"></span>' + badgeText +
-          '</span>' +
         '</div>';
-      el.addEventListener('click', e => { e.stopPropagation(); _selectNode(node.id); });
-      el.addEventListener('dblclick', e => { e.stopPropagation(); _selectNode(node.id); goToEditor(); });
+
+      // Component name row
+      var compHtml = '';
+      if (node.componentName) {
+        var compLabel = _e(node.componentName);
+        if (node.componentType) compLabel = compLabel + ' \u00b7 ' + _e(node.componentType);
+        compHtml = '<div class="fn-comp"><span class="fn-comp-ico">\u25c7</span>' + compLabel + '</div>';
+      }
+
+      // Interaction dropdown header
+      var outEdges = [];
+      _graph.edges.forEach(function(e) { if (e.fromId === node.id) outEdges.push(e); });
+      var dropId = 'fnd-' + node.id;
+      var dropHtml =
+        '<div class="fn-drop-hd" data-dropid="' + dropId + '">' +
+          '<span>\u25bc Interactions (' + outEdges.length + ')</span>' +
+        '</div>' +
+        '<div class="fn-drop-body" id="' + dropId + '">';
+      for (var oi = 0; oi < outEdges.length; oi++) {
+        var oe = outEdges[oi];
+        var toNode = _graph.nodes.get(oe.toId);
+        var toName = toNode ? _e(toNode.name) : oe.toId;
+        var tokShort = oe.tokenKey ? oe.tokenKey.split('.').slice(-2).join('.') : '\u2014';
+        dropHtml +=
+          '<div class="fn-drop-row">' +
+            '<span class="fn-drop-arr">\u2192</span>' +
+            '<span style="flex:1;overflow:hidden;text-overflow:ellipsis"># ' + toName + '</span>' +
+            '<span class="fn-drop-tok">' + tokShort + '</span>' +
+          '</div>';
+      }
+      dropHtml += '</div>';
+
+      el.innerHTML = hdHtml + compHtml + dropHtml;
+
+      // Click: select node
+      el.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var hd = ev.target.closest('.fn-drop-hd');
+        if (hd) {
+          var bid = hd.dataset.dropid;
+          var body = document.getElementById(bid);
+          if (body) body.classList.toggle('open');
+          return;
+        }
+        _selectNode(this.dataset.nid);
+      });
+      el.addEventListener('dblclick', function(ev) {
+        ev.stopPropagation();
+        _selectNode(this.dataset.nid);
+        goToEditor();
+      });
       layer.appendChild(el);
+
     } else if (node.type === 'condition') {
-      const wrap = document.createElement('div');
+      var wrap = document.createElement('div');
       wrap.className = 'cond-wrap';
       wrap.style.cssText = 'left:' + pos.x + 'px;top:' + pos.y + 'px;width:' + pos.w + 'px;height:' + pos.h + 'px';
       wrap.innerHTML = '<div class="cond-diamond"></div><div class="cond-label">' + _e(node.name) + '</div>';
-      wrap.addEventListener('click', e => { e.stopPropagation(); _selectNode(node.id); });
+      wrap.addEventListener('click', function(ev) { ev.stopPropagation(); _selectNode(this.querySelector('.cond-label') ? node.id : node.id); });
       layer.appendChild(wrap);
     }
   });
 }
 
 function _drawEdges() {
-  const svg = document.getElementById('flow-svg');
-  const layer = document.getElementById('nodes-layer');
+  var svg   = document.getElementById('flow-svg');
+  var layer = document.getElementById('nodes-layer');
   svg.innerHTML = '';
-  layer.querySelectorAll('.edge-chip,.branch-lbl').forEach(el => el.remove());
+  layer.querySelectorAll('.edge-chip,.branch-lbl').forEach(function(el) { el.remove(); });
 
-  // Arrow defs — 5색 마커 (g=confirmed, n=neutral, a=amber/MED-HIGH, b=blue, p=pink/LOW)
+  // Arrow marker defs — 2-state: set=#11A85F, unset=#67696F
   var defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-  var markerColors = { g:'#4ade80', n:'#444', a:'#f59e0b', b:'#1a6eff', p:'#f472b6' };
-  ['g','n','a','b','p'].forEach(function(c) {
-    var clr = markerColors[c];
+  [['em','#11A85F'],['eu','#67696F']].forEach(function(pair) {
+    var mid = pair[0], mclr = pair[1];
     var m = document.createElementNS('http://www.w3.org/2000/svg','marker');
-    m.setAttribute('id', c); m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','8');
+    m.setAttribute('id', mid); m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','8');
     m.setAttribute('refX','6'); m.setAttribute('refY','3'); m.setAttribute('orient','auto');
     var mp = document.createElementNS('http://www.w3.org/2000/svg','path');
-    mp.setAttribute('d','M0,0 L7,3 L0,6 Z'); mp.setAttribute('fill', clr);
+    mp.setAttribute('d','M0,0 L7,3 L0,6 Z'); mp.setAttribute('fill', mclr);
     m.appendChild(mp); defs.appendChild(m);
   });
   svg.appendChild(defs);
@@ -1416,52 +1487,55 @@ function _drawEdges() {
   _graph.edges.forEach(function(edge) {
     var fp = _layout.get(edge.fromId), tp = _layout.get(edge.toId);
     if (!fp || !tp) return;
+
     var fx = fp.x + fp.w, fy = fp.y + fp.h / 2;
     var tx = tp.x,        ty = tp.y + tp.h / 2;
-    var hasToken = !!edge.tokenKey;
-    var isYes = edge.branchLabel === 'Yes', isNo = edge.branchLabel === 'No';
+    var hasToken = !!(edge.tokenKey);
 
-    // 4-state color: confirmed/overridden=green, LOW=pink, MED/HIGH=amber, default=neutral
-    var strokeClr, markerSuffix;
-    if (isYes) {
-      strokeClr = '#4ade80'; markerSuffix = 'g';
-    } else if (isNo) {
-      strokeClr = '#ef4444'; markerSuffix = 'n';
-    } else if (edge.status === 'confirmed' || edge.status === 'overridden') {
-      strokeClr = '#4ade80'; markerSuffix = 'g';
-    } else if (edge.confidence === 'LOW') {
-      strokeClr = '#f472b6'; markerSuffix = 'p';
-    } else if (edge.confidence === 'MED' || edge.confidence === 'HIGH') {
-      strokeClr = '#f59e0b'; markerSuffix = 'a';
-    } else {
-      strokeClr = '#444'; markerSuffix = 'n';
-    }
+    // 2-state color: token set → #11A85F, unset → #67696F
+    var strokeClr  = hasToken ? '#11A85F' : '#67696F';
+    var markerSfx  = hasToken ? 'em' : 'eu';
 
-    var cx1 = fx + Math.max((tx - fx) * 0.45, 40);
-    var cx2 = tx - Math.max((tx - fx) * 0.45, 40);
+    // Bent connector (꺾인 직각 선)
+    var midX = fx + (tx - fx) / 2;
     var path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d','M ' + fx + ' ' + fy + ' C ' + cx1 + ' ' + fy + ', ' + cx2 + ' ' + ty + ', ' + tx + ' ' + ty);
+    path.setAttribute('d',
+      'M ' + fx + ' ' + fy +
+      ' L ' + midX + ' ' + fy +
+      ' L ' + midX + ' ' + ty +
+      ' L ' + tx + ' ' + ty
+    );
     path.setAttribute('fill','none');
     path.setAttribute('stroke', strokeClr);
-    path.setAttribute('stroke-width', (edge.status === 'confirmed' || edge.status === 'overridden' || isYes) ? '1.8' : '1.4');
+    path.setAttribute('stroke-width', hasToken ? '1.8' : '1.4');
     path.setAttribute('stroke-linecap','round');
-    if (!hasToken && !isYes && !isNo) path.setAttribute('stroke-dasharray','4 3');
-    path.setAttribute('marker-end','url(#' + markerSuffix + ')');
+    path.setAttribute('stroke-linejoin','round');
+    if (!hasToken) path.setAttribute('stroke-dasharray','4 3');
+    path.setAttribute('marker-end','url(#' + markerSfx + ')');
     svg.appendChild(path);
 
-    const mx = (fx + tx) / 2, my = (fy + ty) / 2;
-    const chip = document.createElement('div');
-    chip.className = 'edge-chip ' + (hasToken ? 'set' : 'unset');
-    chip.style.cssText = 'left:' + mx + 'px;top:' + my + 'px';
-    chip.textContent = hasToken
-      ? (edge.label != null ? edge.label : edge.tokenKey.split('.').slice(-2).join('.'))
-      : '+ set token';
+    // Edge chip icon (▾ set / + unset)
+    var mx = (fx + tx) / 2, my = (fy + ty) / 2;
+    var chip = document.createElement('div');
+    if (hasToken) {
+      chip.className = 'edge-chip set';
+      chip.style.cssText = 'left:' + mx + 'px;top:' + my + 'px;background:#11A85F;color:#fff;border:none';
+      chip.textContent = '\u25be';
+    } else {
+      chip.className = 'edge-chip unset';
+      chip.style.cssText = 'left:' + mx + 'px;top:' + my + 'px;background:transparent;color:#67696F;border:1px solid #67696F';
+      chip.textContent = '+';
+    }
     chip.dataset.eid = edge.id;
-    chip.addEventListener('click', ev => { ev.stopPropagation(); openTokPopup(edge.id, ev.clientX, ev.clientY); });
+    chip.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      openTokPopup(edge.id, ev.clientX, ev.clientY);
+    });
     layer.appendChild(chip);
 
     if (edge.branchLabel) {
-      const lbl = document.createElement('div');
+      var lbl = document.createElement('div');
+      var isYes = edge.branchLabel === 'Yes';
       lbl.className = 'branch-lbl ' + (isYes ? 'bl-yes' : 'bl-no');
       lbl.style.cssText = 'left:' + (mx + 22) + 'px;top:' + (my - 14) + 'px';
       lbl.textContent = edge.branchLabel;
@@ -1623,6 +1697,72 @@ function toggleConn() {
   const open = list.style.display !== 'none';
   list.style.display = open ? 'none' : '';
   chev.textContent = open ? '▸' : '▾';
+}
+function renderFlowList() {
+  var listEl = document.getElementById('fl-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  if (!_flows || _flows.length === 0) {
+    listEl.innerHTML = '<div style="font-size:10px;color:var(--t3);padding:2px 0">No flows detected</div>';
+    return;
+  }
+  for (var fi = 0; fi < _flows.length; fi++) {
+    var fl = _flows[fi];
+    var item = document.createElement('div');
+    item.className = 'fl-item' + (_activeFlowId === fl.id ? ' active' : '');
+    item.dataset.fid = fl.id;
+    item.innerHTML =
+      '<span>\u25b6 ' + _e(fl.name) + '</span>' +
+      '<span class="fl-edit" data-fid="' + fl.id + '">\u270e</span>';
+    item.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      var fid = this.dataset.fid;
+      _activeFlowId = (_activeFlowId === fid ? null : fid);
+      renderFlowList();
+      // Highlight only flow nodes, dim others
+      var activeFlow = null;
+      for (var i = 0; i < _flows.length; i++) {
+        if (_flows[i].id === _activeFlowId) { activeFlow = _flows[i]; break; }
+      }
+      document.querySelectorAll('.fn').forEach(function(el) {
+        if (!activeFlow) {
+          el.style.opacity = '1';
+        } else {
+          el.style.opacity = activeFlow.nodeIds.indexOf(el.dataset.nid) !== -1 ? '1' : '0.25';
+        }
+      });
+    });
+    listEl.appendChild(item);
+  }
+
+  // Create Flow button handler
+  var createBtn = document.getElementById('fl-create-btn');
+  if (createBtn && !createBtn._bound) {
+    createBtn._bound = true;
+    createBtn.addEventListener('click', function() {
+      var name = window.prompt('Flow name:', 'New Flow');
+      if (!name) return;
+      var selectedIds = [];
+      _graph.nodes.forEach(function(n) {
+        if (n.type === 'frame') selectedIds.push(n.id);
+      });
+      var newFlow = {
+        id:          'flow_custom_' + Date.now(),
+        name:        name,
+        startNodeId: selectedIds[0] || '',
+        nodeIds:     selectedIds,
+      };
+      _flows.push(newFlow);
+      renderFlowList();
+      try {
+        parent.postMessage({ pluginMessage: {
+          type: 'SAVE_FRAME_DATA',
+          frameId: '__flows__',
+          data: { flows: _flows },
+        }}, '*');
+      } catch (e) {}
+    });
+  }
 }
 function _updateStatusBar() {
   const total = _graph.edges.size;
@@ -2950,6 +3090,7 @@ window.onmessage = event => {
         if (!norm.toId   && norm.toFrameId)   norm.toId   = norm.toFrameId;
         _graph.edges.set(norm.id, norm);
       });
+      _flows = (msg.flows != null ? msg.flows : []);
       if (_graph.nodes.size > 0) {
         _renderFlow();
         document.getElementById('flow-empty').classList.remove('show');
@@ -2961,6 +3102,7 @@ window.onmessage = event => {
         Object.assign(_customTokens, msg.customTokens);
       }
       _updateStatusBar();
+      renderFlowList();
       document.getElementById('sb-engine').textContent = 'Figma Connected';
       break;
     }
@@ -2974,8 +3116,10 @@ window.onmessage = event => {
         if (!norm.toId   && norm.toFrameId)   norm.toId   = norm.toFrameId;
         _graph.edges.set(norm.id, norm);
       });
+      _flows = (msg.flows != null ? msg.flows : []);
       _renderFlow();
       _updateStatusBar();
+      renderFlowList();
       document.getElementById('flow-empty').classList.toggle('show', _graph.nodes.size === 0);
       showToast('Scan complete — ' + _graph.nodes.size + ' frames', false);
       break;
