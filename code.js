@@ -568,6 +568,42 @@ async function scanFlowGraphV2() {
       }
     } catch (e) {}
 
+    // Build frameInteractions: gesture nodes → nearest internal component
+    var frameInteractions = [];
+    try {
+      for (var fii = 0; fii < gestureNodes.length; fii++) {
+        var fgi = gestureNodes[fii];
+        var fgiSrc = findNearestFrame(fgi.absX, fgi.absY);
+        if (!fgiSrc || fgiSrc.id !== nf.id) continue;
+        // Find nearest INSTANCE/FRAME/COMPONENT inside this frame by distance
+        var nearestComp = null;
+        var nearestDist = Infinity;
+        function findNearestInternal(node, gx, gy) {
+          var ch = (node.children != null ? node.children : []);
+          for (var ci = 0; ci < ch.length; ci++) {
+            var child = ch[ci];
+            if (child.type === 'INSTANCE' || child.type === 'FRAME' || child.type === 'COMPONENT') {
+              try {
+                var at = child.absoluteTransform;
+                var cx = at[0][2] + child.width / 2;
+                var cy = at[1][2] + child.height / 2;
+                var ddx = gx - cx, ddy = gy - cy;
+                var dd = Math.sqrt(ddx * ddx + ddy * ddy);
+                if (dd < nearestDist) { nearestDist = dd; nearestComp = { name: child.name, type: child.type }; }
+              } catch (e) {}
+            }
+            if (child.children && child.children.length > 0) findNearestInternal(child, gx, gy);
+          }
+        }
+        findNearestInternal(nf, fgi.absX, fgi.absY);
+        frameInteractions.push({
+          componentName: (nearestComp != null ? nearestComp.name : 'Unknown'),
+          gestureType:   fgi.gestureType,
+          gestureRaw:    fgi.gestureRaw,
+        });
+      }
+    } catch (e) {}
+
     nodeMap[nf.id] = {
       id:          nf.id,
       type:        'frame',
@@ -583,6 +619,7 @@ async function scanFlowGraphV2() {
       connections: [],
       componentName: compName,
       componentType: compType,
+      interactions:  frameInteractions,
     };
   }
 
@@ -1009,10 +1046,15 @@ figma.ui.onmessage = async msg => {
         scanFlowGraphV2(),
         loadCustomTokens(),
       ]);
+      var savedFlowsRaw = null;
+      try { savedFlowsRaw = await figma.clientStorage.getAsync('stms4_flows'); } catch (e) {}
+      var savedFlows = [];
+      try { if (savedFlowsRaw) savedFlows = JSON.parse(savedFlowsRaw); } catch (e) {}
       figma.ui.postMessage({
         type:             'INIT_DATA',
         nodes:            flowData.nodes,
         edges:            flowData.edges,
+        flows:            flowData.flows.length > 0 ? flowData.flows : savedFlows,
         totalConnections: flowData.totalConnections,
         motionSet:        flowData.motionSet,
         customTokens,
@@ -1125,9 +1167,67 @@ figma.ui.onmessage = async msg => {
     }
 
     // ── Select + focus a layer in Figma canvas ────────────────────────
+    // ── Save user-created flows to clientStorage ──────────────────────
+    case 'SAVE_FLOWS': {
+      try {
+        await figma.clientStorage.setAsync('stms4_flows', JSON.stringify(msg.flows));
+      } catch (e) {}
+      break;
+    }
+
     case 'SELECT_LAYER': {
       const n = figma.currentPage.findOne(n => n.id === msg.layerId);
       if (n) { figma.currentPage.selection = [n]; figma.viewport.scrollAndZoomIntoView([n]); }
+      break;
+    }
+
+    // ── Lightweight frame detail scan (Selected Frame panel) ──────────
+    case 'GET_FRAME_DETAIL': {
+      var detailFrame = figma.currentPage.findOne(function(n) {
+        return n.id === msg.frameId && n.type === 'FRAME';
+      });
+      if (!detailFrame) {
+        figma.ui.postMessage({ type: 'FRAME_DETAIL', frameId: msg.frameId, components: [] });
+        break;
+      }
+
+      // Recursively collect INSTANCE nodes with their component name + gesture type
+      var detailComponents = [];
+      function scanFrameDetail(node, parentPath) {
+        var children = (node.children != null ? node.children : []);
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          if (child.type === 'INSTANCE') {
+            var gestureType = null;
+            var compName = child.name;
+            try {
+              var cp = child.componentProperties;
+              if (cp && cp['Type'] != null && cp['Type'].value != null) {
+                gestureType = String(cp['Type'].value);
+              }
+            } catch (e) {}
+            detailComponents.push({
+              id:          child.id,
+              name:        compName,
+              path:        parentPath,
+              gestureType: gestureType,
+              isTouchGesture: child.name === 'Touch gesture',
+            });
+          }
+          // Recurse (limit depth to avoid performance issues)
+          if (child.children && child.children.length > 0 && detailComponents.length < 30) {
+            scanFrameDetail(child, parentPath + ' > ' + child.name);
+          }
+        }
+      }
+      scanFrameDetail(detailFrame, detailFrame.name);
+
+      figma.ui.postMessage({
+        type:       'FRAME_DETAIL',
+        frameId:    msg.frameId,
+        frameName:  detailFrame.name,
+        components: detailComponents,
+      });
       break;
     }
   }
