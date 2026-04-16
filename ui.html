@@ -24,7 +24,7 @@
   --mono:'Roboto Mono','SF Mono','DM Mono',monospace;
   --sans:'DM Sans','SF Pro Text',-apple-system,sans-serif;
 }
-html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);
+html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:11px;
   font-family:var(--sans);color:var(--t0);font-size:12px;
   -webkit-font-smoothing:antialiased}
 
@@ -94,52 +94,68 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);
    FLOW VIEW
 ═══════════════════════════════════════════ */
 .flow-wrap{flex-direction:row}
-.flow-canvas{flex:1;position:relative;overflow:hidden;background:var(--s1)}
+.flow-canvas{flex:1;position:relative;overflow:hidden;background:#2D2D31}
 .dot-grid{position:absolute;inset:0;pointer-events:none;
-  background-image:radial-gradient(circle,var(--b1) 1px,transparent 1px);
+  background-image:radial-gradient(circle,#3a3a3e 1px,transparent 1px);
   background-size:24px 24px}
 .flow-world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
 .flow-svg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .nodes-layer{position:absolute;top:0;left:0}
 
-/* FrameNode */
-.fn{position:absolute;background:var(--s2);border:1.5px solid var(--b2);
-  border-radius:var(--r12);cursor:pointer;user-select:none;min-width:152px;
-  transition:border-color .15s,box-shadow .15s,transform .1s}
-.fn:hover{border-color:var(--b3);box-shadow:0 6px 24px rgba(0,0,0,.45)}
-.fn:active{transform:scale(.99)}
-.fn.sel{border-color:var(--bhi)!important;box-shadow:0 0 0 2px rgba(59,130,246,.25)!important}
-.fn.st-complete{border-color:var(--green)}
-.fn.st-progress{border-color:var(--orange)}
-.fn.st-none{border-color:var(--b2)}
-.fn-hd{padding:8px 10px 7px;display:flex;align-items:center;gap:6px;
-  border-bottom:1px solid var(--b0)}
-.fn-hash{font-size:10px;color:var(--t2);font-weight:700}
-.fn-name{font-size:11px;font-weight:600;color:var(--t0);flex:1;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
-.fn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.fn-dot.st-complete{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.55)}
-.fn-dot.st-progress{background:var(--orange);box-shadow:0 0 5px rgba(249,115,22,.45)}
-.fn-dot.st-none{background:var(--b3)}
-.fn-body{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px}
-.fn-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;
-  border-radius:20px;font-size:9px;font-weight:700}
-.fn-badge.st-complete{background:var(--gd);color:var(--green);border:1px solid var(--gb)}
-.fn-badge.st-progress{background:var(--od);color:var(--orange);border:1px solid var(--ob)}
-.fn-badge.st-none{background:rgba(255,255,255,.04);color:var(--t3);border:1px solid var(--b1)}
-.fn-bdot{width:4px;height:4px;border-radius:50%;background:currentColor}
-.fn-comp{padding:5px 10px 6px;font-size:10px;color:var(--t2);border-top:1px solid var(--b1);
+/* FrameNode — Light card, depth bg applied via JS */
+.fn{position:absolute;background:#FFFFFF;border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;cursor:grab;user-select:none;min-width:180px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  transition:border-color .15s,box-shadow .15s}
+.fn:hover{border-color:rgba(0,0,0,.18);box-shadow:0 4px 12px rgba(0,0,0,.16)}
+.fn:active{cursor:grabbing}
+.fn.sel{border:2px solid #1a6eff!important;box-shadow:0 0 0 3px rgba(26,110,255,.15)!important}
+.fn.st-complete{}
+.fn.st-progress{}
+.fn.st-none{}
+.fn-hd{padding:8px 10px 7px;display:flex;align-items:center;gap:5px;
+  border-radius:11px 11px 0 0;border-bottom:1px solid rgba(0,0,0,.06);background:transparent}
+.fn-hd.depth-1{}
+.fn-hd.depth-2{}
+.fn-hd.depth-3{}
+.fn-hd.depth-4{}
+.fn-hash{font-size:11px;color:#555;font-weight:700}
+.fn-name{font-size:11px;font-weight:700;color:#1A1A1A;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.fn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-left:auto}
+.fn-dot.st-complete{background:#4ade80}
+.fn-dot.st-progress{background:#9CA3AF}
+.fn-dot.st-none{background:#9CA3AF}
+.fn-body{padding:4px 0 6px;display:flex;flex-direction:column}
+.fn-badge{display:none}
+.fn-bdot{display:none}
+.fn-comp{padding:3px 10px 3px;font-size:11px;color:#1A1A1A;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fn-comp-ico{color:var(--t3);margin-right:3px}
-.fn-drop-hd{padding:5px 10px 5px;display:flex;align-items:center;justify-content:space-between;
-  cursor:pointer;border-top:1px solid var(--b1);font-size:10px;color:var(--t2)}
-.fn-drop-hd:hover{background:var(--s3)}
-.fn-drop-body{display:none;padding:4px 10px 6px;display:flex;flex-direction:column;gap:3px}
+.fn-comp-ico{color:#7C3AED;margin-right:4px;font-size:10px}
+/* Component list items */
+.fn-comp-item{display:flex;align-items:center;gap:5px;padding:3px 10px;
+  font-size:11px;color:#1A1A1A;border-radius:4px;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 4px}
+.fn-comp-item:hover{background:rgba(0,0,0,.04)}
+.fn-comp-item.selected{background:#EBF3FF;color:#1a6eff}
+.fn-comp-icon{color:#7C3AED;font-size:10px;flex-shrink:0}
+.fn-comp-more{font-size:10px;color:#888;padding:2px 10px}
+/* Interaction dropdown */
+.fn-drop-hd{padding:5px 10px;display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;border-top:1px solid rgba(0,0,0,.06);font-size:10px;color:#666}
+.fn-drop-hd:hover{background:rgba(0,0,0,.03)}
+.fn-drop-body{display:none;padding:4px 10px 6px;flex-direction:column;gap:3px}
 .fn-drop-body.open{display:flex}
-.fn-drop-row{font-size:10px;color:var(--t2);display:flex;align-items:center;gap:4px;
+.fn-drop-row{font-size:10px;color:#555;display:flex;align-items:center;gap:4px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fn-drop-arr{color:var(--t3);flex-shrink:0}
-.fn-drop-tok{color:var(--t3);font-size:9px;flex-shrink:0}
+.fn-drop-arr{color:#AAA;flex-shrink:0}
+.fn-drop-tok{color:#AAA;font-size:9px;flex-shrink:0}
+/* Screen Flow badge */
+.screen-flow-badge{display:inline-flex;align-items:center;gap:4px;
+  background:#1a6eff;color:#FFFFFF;font-size:10px;font-weight:600;
+  padding:3px 8px;border-radius:12px;cursor:pointer;margin:6px 8px}
+.screen-flow-badge .chevron{font-size:9px}
+/* Flow list */
 .fl-item{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;
   background:var(--s2);border:1px solid var(--b1);border-radius:var(--r4);cursor:pointer;
   font-size:10px;color:var(--t1)}
@@ -688,9 +704,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);
 
 <!-- Legend bar (flow) -->
 <div class="legend-bar" id="legend-bar">
-  <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Complete</div>
-  <div class="leg"><div class="leg-dot" style="background:var(--orange)"></div>Progress</div>
-  <div class="leg"><div class="leg-dot" style="background:var(--b3)"></div>None</div>
+  <div class="leg"><div class="leg-dot" style="background:#4ade80"></div>Complete</div>
+  <div class="leg"><div class="leg-dot" style="background:#9CA3AF"></div>None</div>
 </div>
 
 <!-- ══ FLOW VIEW ══════════════════════════════════════════════════ -->
@@ -728,8 +743,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);
     </div>
     <div class="rp-scroll">
       <div class="rp-conn-hd" onclick="toggleConn()">
-        <span class="rp-conn-title">● Screen Flow <span class="rp-cnt" id="rp-cnt">0</span></span>
-        <span class="rp-chev" id="rp-chev">▾</span>
+        <span class="screen-flow-badge"><span>Screen Flow</span><span class="rp-cnt" id="rp-cnt">0</span><span class="chevron">\u25be</span></span>
       </div>
       <div id="rp-conn-list"></div>
       <div class="wf-list" style="margin-top:4px">
@@ -1292,6 +1306,17 @@ let _activeEdgeId = null;     // for token popup
 let _flows    = [];           // detected flows
 let _activeFlowId = null;     // highlighted flow
 
+// Drag & Drop state
+var dragState = {
+  dragging:    false,
+  nodeId:      null,
+  startMouseX: 0,
+  startMouseY: 0,
+  startNodeX:  0,
+  startNodeY:  0,
+};
+var userNodePositions = {}; // { nodeId: { x, y } } — persists across re-renders
+
 function loadMockFlow() {
   _graph.nodes.clear(); _graph.edges.clear();
   MOCK_NODES.forEach(n => _graph.nodes.set(n.id, {...n}));
@@ -1312,8 +1337,8 @@ function _renderFlow() {
 
 function _computeLayout() {
   _layout.clear();
-  var FW = 158, FH = 84, CW = 96, CH = 64;
-  var COL_GAP = 92, ROW_GAP = 56, SX = 32, SY = 32;
+  var FW = 180, FH = 100, CW = 96, CH = 64;
+  var COL_GAP = 92, ROW_GAP = 48, SX = 32, SY = 32;
 
   var frameNodes = [];
   var condNodes  = [];
@@ -1351,6 +1376,16 @@ function _computeLayout() {
   // Apply posMap to _layout
   Object.keys(posMap).forEach(function(id) { _layout.set(id, posMap[id]); });
 
+  // Restore user-dragged positions (overrides computed layout)
+  Object.keys(userNodePositions).forEach(function(nid) {
+    var saved = userNodePositions[nid];
+    var existing = _layout.get(nid);
+    if (existing && saved) {
+      existing.x = saved.x;
+      existing.y = saved.y;
+    }
+  });
+
   // ── Step 4: SVG canvas auto-resize ──────────────────────────────────
   var maxX = 0, maxY = 0;
   Object.values(posMap).forEach(function(pos) {
@@ -1384,17 +1419,38 @@ function _drawNodes() {
   var layer = document.getElementById('nodes-layer');
   layer.innerHTML = '';
 
+  // Depth label rendering (수정 7)
+  var depthXMap = {};
+  _graph.nodes.forEach(function(node) {
+    if (node.type !== 'frame') return;
+    var pos = _layout.get(node.id);
+    if (!pos) return;
+    var d = (node.depth != null ? node.depth : 1);
+    if (depthXMap[d] == null) depthXMap[d] = pos.x;
+  });
+  Object.keys(depthXMap).forEach(function(d) {
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'position:absolute;left:' + depthXMap[d] + 'px;top:8px;' +
+      'font-size:13px;font-weight:700;color:#888;white-space:nowrap;pointer-events:none;user-select:none';
+    lbl.textContent = d + ' depth';
+    layer.appendChild(lbl);
+  });
+
+  var depthColors = { 1: '#EBF3FF', 2: '#FFFBE6', 3: '#E8F8F0' };
+
   _graph.nodes.forEach(function(node) {
     var pos = _layout.get(node.id);
     if (!pos) return;
 
     if (node.type === 'frame') {
       var el = document.createElement('div');
+      var depthNum = (node.depth != null ? node.depth : 1);
+      var cardBg = (depthColors[depthNum] != null ? depthColors[depthNum] : (depthNum >= 4 ? '#F3EEFF' : '#FFFFFF'));
       el.className = 'fn st-' + node.status + (node.id === _selNodeId ? ' sel' : '');
       el.dataset.nid = node.id;
-      el.style.cssText = 'left:' + pos.x + 'px;top:' + pos.y + 'px;width:' + pos.w + 'px';
+      el.style.cssText = 'left:' + pos.x + 'px;top:' + pos.y + 'px;width:' + pos.w + 'px;background:' + cardBg;
 
-      // Header row
+      // Header
       var hdHtml =
         '<div class="fn-hd">' +
           '<span class="fn-hash">#</span>' +
@@ -1402,15 +1458,29 @@ function _drawNodes() {
           '<span class="fn-dot st-' + node.status + '"></span>' +
         '</div>';
 
-      // Component name row
-      var compHtml = '';
+      // Component list (수정 3) — ✦ icon, max 5 + more N
+      var compHtml = '<div class="fn-body">';
       if (node.componentName) {
-        var compLabel = _e(node.componentName);
-        if (node.componentType) compLabel = compLabel + ' \u00b7 ' + _e(node.componentType);
-        compHtml = '<div class="fn-comp"><span class="fn-comp-ico">\u25c7</span>' + compLabel + '</div>';
+        var compItems = [{ name: node.componentName, type: node.componentType }];
+        var MAX_COMP = 5;
+        var shown = compItems.slice(0, MAX_COMP);
+        for (var ci = 0; ci < shown.length; ci++) {
+          var c = shown[ci];
+          var cLabel = _e(c.name);
+          if (c.type) cLabel = cLabel + ' \u00b7 ' + _e(c.type);
+          compHtml +=
+            '<div class="fn-comp-item">' +
+              '<span class="fn-comp-icon">\u2736</span>' +
+              '<span style="overflow:hidden;text-overflow:ellipsis">' + cLabel + '</span>' +
+            '</div>';
+        }
+        if (compItems.length > MAX_COMP) {
+          compHtml += '<div class="fn-comp-more">+ more ' + (compItems.length - MAX_COMP) + '</div>';
+        }
       }
+      compHtml += '</div>';
 
-      // Interaction dropdown header
+      // Interaction dropdown
       var outEdges = [];
       _graph.edges.forEach(function(e) { if (e.fromId === node.id) outEdges.push(e); });
       var dropId = 'fnd-' + node.id;
@@ -1435,7 +1505,7 @@ function _drawNodes() {
 
       el.innerHTML = hdHtml + compHtml + dropHtml;
 
-      // Click: select node
+      // Click: select / dropdown toggle
       el.addEventListener('click', function(ev) {
         ev.stopPropagation();
         var hd = ev.target.closest('.fn-drop-hd');
@@ -1452,6 +1522,26 @@ function _drawNodes() {
         _selectNode(this.dataset.nid);
         goToEditor();
       });
+
+      // Drag: mousedown
+      el.addEventListener('mousedown', function(ev) {
+        if (ev.button !== 0) return;
+        if (ev.target.closest('.fn-drop-hd')) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        var nid = this.dataset.nid;
+        var curPos = _layout.get(nid);
+        if (!curPos) return;
+        dragState.dragging    = true;
+        dragState.nodeId      = nid;
+        dragState.startMouseX = ev.clientX;
+        dragState.startMouseY = ev.clientY;
+        dragState.startNodeX  = curPos.x;
+        dragState.startNodeY  = curPos.y;
+        this.style.zIndex = '100';
+        this.style.cursor = 'grabbing';
+      });
+
       layer.appendChild(el);
 
     } else if (node.type === 'condition') {
@@ -1459,7 +1549,7 @@ function _drawNodes() {
       wrap.className = 'cond-wrap';
       wrap.style.cssText = 'left:' + pos.x + 'px;top:' + pos.y + 'px;width:' + pos.w + 'px;height:' + pos.h + 'px';
       wrap.innerHTML = '<div class="cond-diamond"></div><div class="cond-label">' + _e(node.name) + '</div>';
-      wrap.addEventListener('click', function(ev) { ev.stopPropagation(); _selectNode(this.querySelector('.cond-label') ? node.id : node.id); });
+      wrap.addEventListener('click', function(ev) { ev.stopPropagation(); _selectNode(node.id); });
       layer.appendChild(wrap);
     }
   });
@@ -1514,8 +1604,17 @@ function _drawEdges() {
     path.setAttribute('marker-end','url(#' + markerSfx + ')');
     svg.appendChild(path);
 
-    // Edge chip icon (▾ set / + unset)
+    // Edge chip icon — position at midpoint with card-overlap safety
     var mx = (fx + tx) / 2, my = (fy + ty) / 2;
+    // 카드 영역 겹침 방지: fromFrame 하단 + 8px ~ toFrame 상단 - 8px 사이 유지
+    if (fp && tp) {
+      var safeMinY = fp.y + fp.h + 8;
+      var safeMaxY = tp.y - 8;
+      if (safeMaxY > safeMinY) {
+        if (my < safeMinY) my = safeMinY;
+        if (my > safeMaxY) my = safeMaxY;
+      }
+    }
     var chip = document.createElement('div');
     if (hasToken) {
       chip.className = 'edge-chip set';
@@ -1698,6 +1797,46 @@ function toggleConn() {
   list.style.display = open ? 'none' : '';
   chev.textContent = open ? '▸' : '▾';
 }
+// ── Drag & Drop document-level handlers ─────────────────────────────
+document.addEventListener('mousemove', function(ev) {
+  if (!dragState.dragging || !dragState.nodeId) return;
+  var dx = (ev.clientX - dragState.startMouseX) / _scale;
+  var dy = (ev.clientY - dragState.startMouseY) / _scale;
+  var newX = dragState.startNodeX + dx;
+  var newY = dragState.startNodeY + dy;
+  // Update _layout in place
+  var pos = _layout.get(dragState.nodeId);
+  if (pos) {
+    pos.x = newX;
+    pos.y = newY;
+  }
+  // Move DOM element directly (fast, no full re-render)
+  var nodeEl = document.querySelector('[data-nid="' + dragState.nodeId + '"]');
+  if (nodeEl) {
+    nodeEl.style.left = newX + 'px';
+    nodeEl.style.top  = newY + 'px';
+  }
+  // Redraw edges only
+  _drawEdges();
+});
+
+document.addEventListener('mouseup', function(ev) {
+  if (!dragState.dragging) return;
+  var nid = dragState.nodeId;
+  var pos = _layout.get(nid);
+  if (pos) {
+    userNodePositions[nid] = { x: pos.x, y: pos.y };
+  }
+  // Reset cursor on released element
+  var nodeEl = document.querySelector('[data-nid="' + nid + '"]');
+  if (nodeEl) {
+    nodeEl.style.zIndex = '';
+    nodeEl.style.cursor = '';
+  }
+  dragState.dragging = false;
+  dragState.nodeId   = null;
+});
+
 function renderFlowList() {
   var listEl = document.getElementById('fl-list');
   if (!listEl) return;
@@ -2930,9 +3069,8 @@ function setView(viewName) {
   document.getElementById('legend-bar').classList.toggle('hide', viewName !== 'flow');
   document.getElementById('sb-view').textContent = viewName.charAt(0).toUpperCase() + viewName.slice(1);
   try {
-    var rw = viewName === 'editor' ? 1240 : viewName === 'library' ? 1080 : 960;
-    var rh = viewName === 'editor' ? 760 : 600;
-    parent.postMessage({ pluginMessage: { type: 'RESIZE', width: rw, height: rh } }, '*');
+    // 탭 전환 시 자동 resize 제거 — 사용자가 수동으로 조절
+    void 0;
   } catch (e) {}
 
   if (viewName === 'editor') {
