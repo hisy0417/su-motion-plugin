@@ -276,7 +276,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:
 .rp-collapsible-body.collapsed{display:none}
 .rp-collapsible-body.expanded{display:block}
 /* Frame detail panel */
-.fd-section{padding:4px 10px 8px}
+.fd-section{padding:4px 10px 8px;max-height:180px;overflow-y:auto;overflow-x:hidden}
+.fd-section::-webkit-scrollbar{width:3px}
+.fd-section::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 .fd-comp-row{display:flex;align-items:center;gap:5px;padding:3px 0;
   border-bottom:1px solid var(--b0);font-size:10px}
 .fd-comp-row:last-child{border-bottom:none}
@@ -306,6 +308,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:
   display:flex;align-items:center;justify-content:center;gap:3px}
 .fl-play-btn:hover{background:var(--s2);color:var(--t1)}
 .fl-play-btn.active{background:#1a6eff;color:#fff;border-color:#1a6eff}
+/* Screen Flow section */
+.sf-header{display:flex;align-items:center;gap:5px;padding:6px 10px;cursor:pointer;border-top:1px solid var(--b0)}
+.sf-header:hover{background:var(--s2)}
+.sf-dot{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.sf-title{font-size:10px;font-weight:600;color:var(--t1);flex:1}
+.sf-count{font-size:9px;background:#1a6eff;color:#fff;border-radius:50%;width:16px;height:16px;
+  display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.sf-chevron{font-size:9px;color:var(--t3)}
+.sf-body{padding:2px 10px 4px}
+.sf-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;margin-bottom:2px}
+.sf-row:hover{background:var(--s2)}
+.sf-arrow{color:var(--t3);font-size:10px;flex-shrink:0}
+.sf-frame-name{flex:1;font-size:10px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sf-token{font-size:9px;color:var(--t3);background:rgba(0,0,0,.08);padding:2px 6px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+.sf-token-set{color:#1a6eff;background:rgba(26,110,255,.1)}
+/* Token remove */
+.tp-remove{color:#ef4444!important}
+.tp-remove:hover{background:rgba(239,68,68,.1)!important}
 
 /* Flow empty */
 .flow-empty{position:absolute;inset:0;display:none;flex-direction:column;
@@ -795,10 +815,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:
 
     <div class="rp-scroll">
       <!-- Screen Flow connections -->
-      <div class="rp-conn-hd" onclick="toggleConn()">
-        <span class="screen-flow-badge"><span>Screen Flow</span><span class="rp-cnt" id="rp-cnt">0</span><span class="chevron">\u25be</span></span>
+      <div class="sf-header" id="sf-header" onclick="toggleSF()">
+        <span class="sf-dot"></span>
+        <span class="sf-title">Screen Flow</span>
+        <span class="sf-count" id="rp-cnt">0</span>
+        <span class="sf-chevron" id="sf-chevron"><svg width="12" height="12" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.2792 17.3065C26.6622 16.9088 27.2954 16.8964 27.6932 17.2792C28.0909 17.6622 28.1033 18.2954 27.7206 18.6933L20.9794 25.6933C20.791 25.8888 20.5312 25.9997 20.2596 25.9999C19.9882 26 19.7285 25.8895 19.5399 25.6942L12.7802 18.6942C12.3968 18.2969 12.4084 17.6637 12.8055 17.2802C13.2029 16.8969 13.8361 16.9084 14.2196 17.3056L20.2577 23.5595L26.2792 17.3065Z" fill="#8A8A8A"/></svg></span>
       </div>
-      <div id="rp-conn-list"></div>
+      <div class="sf-body" id="rp-conn-list"></div>
 
       <!-- Flow List (collapsible) -->
       <div class="rp-collapsible-hd" id="fl-hd" onclick="toggleSection('fl')">
@@ -829,7 +852,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--s0);font-size:
       <!-- Working Flow guide (collapsible, collapsed by default) -->
       <div class="rp-collapsible-hd" id="wf-hd">
         <span>Info Guide</span>
-        <span id="wf-chev">\u25b8</span>
+        <span id="wf-chev"><svg width="12" height="12" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.2792 17.3065C26.6622 16.9088 27.2954 16.8964 27.6932 17.2792C28.0909 17.6622 28.1033 18.2954 27.7206 18.6933L20.9794 25.6933C20.791 25.8888 20.5312 25.9997 20.2596 25.9999C19.9882 26 19.7285 25.8895 19.5399 25.6942L12.7802 18.6942C12.3968 18.2969 12.4084 17.6637 12.8055 17.2802C13.2029 16.8969 13.8361 16.9084 14.2196 17.3056L20.2577 23.5595L26.2792 17.3065Z" fill="#8A8A8A"/></svg></span>
       </div>
       <div class="rp-collapsible-body collapsed" id="wf-body">
         <div class="wf-list">
@@ -1557,7 +1580,11 @@ function _drawNodes() {
       var dropId = 'fnd-' + node.id;
       var dropHtml =
         '<div class="fn-drop-hd" data-dropid="' + dropId + '">' +
-          '<span>\u25bc Interactions (' + outEdges.length + ')</span>' +
+          '<span>' +
+          '<svg width="10" height="10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<path d="M26.2792 17.3065C26.6622 16.9088 27.2954 16.8964 27.6932 17.2792C28.0909 17.6622 28.1033 18.2954 27.7206 18.6933L20.9794 25.6933C20.791 25.8888 20.5312 25.9997 20.2596 25.9999C19.9882 26 19.7285 25.8895 19.5399 25.6942L12.7802 18.6942C12.3968 18.2969 12.4084 17.6637 12.8055 17.2802C13.2029 16.8969 13.8361 16.9084 14.2196 17.3056L20.2577 23.5595L26.2792 17.3065Z" fill="#8A8A8A"/>' +
+          '</svg>' +
+          ' Interactions (' + outEdges.length + ')</span>' +
         '</div>' +
         '<div class="fn-drop-body" id="' + dropId + '">';
       for (var oi = 0; oi < outEdges.length; oi++) {
@@ -1588,10 +1615,15 @@ function _drawNodes() {
             this.classList.add('flow-selected');
             this.classList.remove('flow-selectable');
           } else {
+            // Deselect — revert to selectable state
             _flowPickedIds.splice(idx, 1);
             this.classList.remove('flow-selected');
-            this.classList.add('flow-selectable');
+            var self = this;
+            self.classList.remove('flow-selectable');
+            setTimeout(function() { self.classList.add('flow-selectable'); }, 50);
           }
+          var confirmBtn = document.getElementById('btn-flow-confirm');
+          if (confirmBtn) confirmBtn.disabled = _flowPickedIds.length === 0;
           return;
         }
         var hd = ev.target.closest('.fn-drop-hd');
@@ -1668,8 +1700,8 @@ function _drawEdges() {
     var fp = _layout.get(edge.fromId), tp = _layout.get(edge.toId);
     if (!fp || !tp) return;
 
-    var fx = fp.x + fp.w, fy = fp.y + fp.h / 2;
-    var tx = tp.x,        ty = tp.y + tp.h / 2;
+    var fx = fp.x + fp.w, fy = fp.y + fp.h * 0.25;
+    var tx = tp.x,        ty = tp.y + tp.h * 0.25;
     var hasToken = !!(edge.tokenKey);
     var strokeClr = hasToken ? '#11A85F' : '#BBBBBB';
     var markerSfx = hasToken ? 'em' : 'eu';
@@ -1721,7 +1753,7 @@ function _drawEdges() {
       };
     }
     var pt = bezierPt(0.35);
-    var chipX = pt.x - 12, chipY = pt.y - 10;
+    var chipX = pt.x - 12, chipY = pt.y - 12;
     var collision = allPos.some(function(pos) {
       return chipX > pos.x - 10 && chipX < pos.x + pos.w + 10 &&
              chipY > pos.y - 10 && chipY < pos.y + pos.h + 10;
@@ -1729,18 +1761,32 @@ function _drawEdges() {
     if (collision) {
       pt = bezierPt(0.5);
       chipX = pt.x - 12;
-      chipY = pt.y - 10;
+      chipY = pt.y - 12;
     }
 
+    // SVG chip icon (수정 6: motion token SVG 교체)
     var chip = document.createElement('div');
+    chip.className = 'edge-chip ' + (hasToken ? 'set' : 'unset');
+    chip.style.cssText = 'left:' + chipX + 'px;top:' + chipY + 'px;' +
+      'background:none;border:none;padding:0;width:24px;height:24px;' +
+      'display:flex;align-items:center;justify-content:center';
     if (hasToken) {
-      chip.className = 'edge-chip set';
-      chip.style.cssText = 'left:' + chipX + 'px;top:' + chipY + 'px;background:#11A85F;color:#fff;border:none';
-      chip.textContent = '\u25be';
+      chip.innerHTML =
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<rect x="0.5" y="0.5" width="23" height="23" rx="3.5" fill="#A3CEB9"/>' +
+        '<rect x="0.5" y="0.5" width="23" height="23" rx="3.5" stroke="#11A85F"/>' +
+        '<path d="M11.567 16.25C11.7594 16.5833 12.2406 16.5833 12.433 16.25L15.8971 10.25C' +
+        '16.0896 9.91667 15.849 9.5 15.4641 9.5H8.5359C8.151 9.5 7.91044 9.91667 8.10289 10.25' +
+        'L11.567 16.25Z" fill="#11A85F"/>' +
+        '</svg>';
     } else {
-      chip.className = 'edge-chip unset';
-      chip.style.cssText = 'left:' + chipX + 'px;top:' + chipY + 'px;background:transparent;color:#67696F;border:1px solid #67696F';
-      chip.textContent = '+';
+      chip.innerHTML =
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<rect x="0.5" y="0.5" width="23" height="23" rx="3.5" fill="#393939"/>' +
+        '<rect x="0.5" y="0.5" width="23" height="23" rx="3.5" stroke="#BBBBBB"/>' +
+        '<path d="M8 11.2702H11.2247V8H12.7753V11.2702H16V12.7298H12.7753V16H11.2247V12.7298H8V11.2702Z"' +
+        ' fill="#BBBBBB"/>' +
+        '</svg>';
     }
     chip.dataset.eid = edge.id;
     chip.addEventListener('click', function(ev) {
@@ -1787,7 +1833,7 @@ function _selectNode(id) {
     }
   }
 
-  // Populate connections list
+  // Populate Screen Flow connections list (sf-row format)
   var list = document.getElementById('rp-conn-list');
   list.innerHTML = '';
   var outEdges = [];
@@ -1795,15 +1841,27 @@ function _selectNode(id) {
   document.getElementById('rp-cnt').textContent = outEdges.length;
   outEdges.forEach(function(e) {
     var toNode = _graph.nodes.get(e.toId);
+    var toName = toNode ? toNode.name.replace('\n',' ') : e.toId;
+    var tokenShort = e.tokenKey ? e.tokenKey.split('.').slice(-2).join('.') : 'None';
+    var hasToken = !!(e.confirmedToken || e.tokenKey);
     var row = document.createElement('div');
-    row.className = 'rp-conn-row';
-    row.innerHTML = '<span class="rp-carr">\u2192</span>' +
-      '<span class="rp-cfr">#&nbsp;' + _e((toNode && toNode.name ? toNode.name.replace('\n',' ') : null) || e.toId) + '</span>' +
-      '<span class="rp-ctok ' + (e.tokenKey ? '' : 'none') + '">' +
-        (e.tokenKey ? e.tokenKey.split('.').slice(-2).join('.') : '\u2014') + '</span>';
+    row.className = 'sf-row';
+    row.innerHTML =
+      '<span class="sf-arrow">\u2192</span>' +
+      '<span class="sf-frame-name"># ' + _e(toName) + '</span>' +
+      '<span class="sf-token' + (hasToken ? ' sf-token-set' : '') + '">' + _e(tokenShort) + '</span>';
     row.addEventListener('click', function() { openTokPopup(e.id, 200, 200); });
     list.appendChild(row);
   });
+}
+
+function toggleSF() {
+  var body = document.getElementById('rp-conn-list');
+  var chev = document.getElementById('sf-chevron');
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  var CHEV_SVG = '<svg width="12" height="12" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.2792 17.3065C26.6622 16.9088 27.2954 16.8964 27.6932 17.2792C28.0909 17.6622 28.1033 18.2954 27.7206 18.6933L20.9794 25.6933C20.791 25.8888 20.5312 25.9997 20.2596 25.9999C19.9882 26 19.7285 25.8895 19.5399 25.6942L12.7802 18.6942C12.3968 18.2969 12.4084 17.6637 12.8055 17.2802C13.2029 16.8969 13.8361 16.9084 14.2196 17.3056L20.2577 23.5595L26.2792 17.3065Z" fill="#8A8A8A"/></svg>';
+  if (chev) chev.innerHTML = CHEV_SVG;
 }
 
 function _renderFrameDetail(interactions) {
@@ -1937,6 +1995,35 @@ function renderTokPop(q) {
     });
     const d = document.createElement('div'); d.className = 'tp-div'; list.appendChild(d);
   });
+
+  // Remove token option
+  var removeDivider = document.createElement('div');
+  removeDivider.className = 'tp-div';
+  list.appendChild(removeDivider);
+  var removeItem = document.createElement('div');
+  removeItem.className = 'tp-item tp-remove';
+  removeItem.textContent = 'Remove token';
+  removeItem.addEventListener('click', function() {
+    var edgeR = _graph.edges.get(_activeEdgeId);
+    if (edgeR) {
+      edgeR.confirmedToken = null;
+      edgeR.tokenKey = (edgeR.suggestedToken != null ? edgeR.suggestedToken : null);
+      edgeR.status = 'suggested';
+      _drawEdges();
+      if (_selNodeId) _selectNode(_selNodeId);
+      try {
+        parent.postMessage({ pluginMessage: {
+          type: 'SAVE_EDGE_TOKEN',
+          fromId: edgeR.fromId,
+          toId:   edgeR.toId,
+          tokenKey: null,
+        }}, '*');
+      } catch (e) {}
+    }
+    document.getElementById('tok-popup').classList.remove('show');
+    _updateStatusBar();
+  });
+  list.appendChild(removeItem);
 }
 function doScan() {
   showToast('Scanning…');
