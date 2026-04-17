@@ -568,36 +568,49 @@ async function scanFlowGraphV2() {
       }
     } catch (e) {}
 
-    // Build frameInteractions: gesture nodes → nearest internal component
+    // Build frameInteractions: gesture nodes → nearest INSTANCE (depth 1~2 only)
     var frameInteractions = [];
     try {
       for (var fii = 0; fii < gestureNodes.length; fii++) {
         var fgi = gestureNodes[fii];
         var fgiSrc = findNearestFrame(fgi.absX, fgi.absY);
         if (!fgiSrc || fgiSrc.id !== nf.id) continue;
-        // Find nearest INSTANCE/FRAME/COMPONENT inside this frame by distance
-        var nearestComp = null;
-        var nearestDist = Infinity;
-        function findNearestInternal(node, gx, gy) {
-          var ch = (node.children != null ? node.children : []);
-          for (var ci = 0; ci < ch.length; ci++) {
-            var child = ch[ci];
-            if (child.type === 'INSTANCE' || child.type === 'FRAME' || child.type === 'COMPONENT') {
-              try {
-                var at = child.absoluteTransform;
-                var cx = at[0][2] + child.width / 2;
-                var cy = at[1][2] + child.height / 2;
-                var ddx = gx - cx, ddy = gy - cy;
-                var dd = Math.sqrt(ddx * ddx + ddy * ddy);
-                if (dd < nearestDist) { nearestDist = dd; nearestComp = { name: child.name, type: child.type }; }
-              } catch (e) {}
+
+        // Collect depth-1 and depth-2 INSTANCE candidates only
+        var compCandidates = [];
+        var d1 = (nf.children != null ? nf.children : []);
+        for (var d1i = 0; d1i < d1.length; d1i++) {
+          var c1 = d1[d1i];
+          if (c1.type === 'INSTANCE') {
+            compCandidates.push({ name: c1.name, node: c1 });
+          }
+          var d2 = (c1.children != null ? c1.children : []);
+          for (var d2i = 0; d2i < d2.length; d2i++) {
+            var c2 = d2[d2i];
+            if (c2.type === 'INSTANCE') {
+              compCandidates.push({ name: c2.name, node: c2 });
             }
-            if (child.children && child.children.length > 0) findNearestInternal(child, gx, gy);
           }
         }
-        findNearestInternal(nf, fgi.absX, fgi.absY);
+
+        // Find nearest candidate by Euclidean distance to gesture coords
+        var nearestComp = null;
+        var minDist = Infinity;
+        for (var cci = 0; cci < compCandidates.length; cci++) {
+          var cand = compCandidates[cci];
+          try {
+            var at = cand.node.absoluteTransform;
+            var ccx = at[0][2] + cand.node.width / 2;
+            var ccy = at[1][2] + cand.node.height / 2;
+            var ddx = fgi.absX - ccx;
+            var ddy = fgi.absY - ccy;
+            var dd = Math.sqrt(ddx * ddx + ddy * ddy);
+            if (dd < minDist) { minDist = dd; nearestComp = cand.name; }
+          } catch (e) {}
+        }
+
         frameInteractions.push({
-          componentName: (nearestComp != null ? nearestComp.name : 'Unknown'),
+          componentName: (nearestComp != null ? nearestComp : 'Unknown'),
           gestureType:   fgi.gestureType,
           gestureRaw:    fgi.gestureRaw,
         });
