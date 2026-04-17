@@ -568,7 +568,8 @@ async function scanFlowGraphV2() {
       }
     } catch (e) {}
 
-    // Build frameInteractions: gesture nodes → nearest INSTANCE (depth 1~2 only)
+    // Build frameInteractions: smallest INSTANCE containing gesture coords
+    // (full recursive search — handles deep component trees like Full_View > Frame > Care on call)
     var frameInteractions = [];
     try {
       for (var fii = 0; fii < gestureNodes.length; fii++) {
@@ -576,41 +577,66 @@ async function scanFlowGraphV2() {
         var fgiSrc = findNearestFrame(fgi.absX, fgi.absY);
         if (!fgiSrc || fgiSrc.id !== nf.id) continue;
 
-        // Collect depth-1 and depth-2 INSTANCE candidates only
-        var compCandidates = [];
-        var d1 = (nf.children != null ? nf.children : []);
-        for (var d1i = 0; d1i < d1.length; d1i++) {
-          var c1 = d1[d1i];
-          if (c1.type === 'INSTANCE') {
-            compCandidates.push({ name: c1.name, node: c1 });
-          }
-          var d2 = (c1.children != null ? c1.children : []);
-          for (var d2i = 0; d2i < d2.length; d2i++) {
-            var c2 = d2[d2i];
-            if (c2.type === 'INSTANCE') {
-              compCandidates.push({ name: c2.name, node: c2 });
+        var bestComp = null;
+        var bestArea = Infinity;
+
+        // Pass 1: find smallest INSTANCE whose bounding box contains gesture coords
+        function findSmallestContaining(node, gx, gy) {
+          if (!node) return;
+          var ch = (node.children != null ? node.children : []);
+          for (var ci = 0; ci < ch.length; ci++) {
+            var child = ch[ci];
+            if (!child) continue;
+            if (child.type === 'INSTANCE') {
+              try {
+                var at = child.absoluteTransform;
+                var cx = at[0][2];
+                var cy = at[1][2];
+                var cw = child.width;
+                var chh = child.height;
+                if (gx >= cx && gx <= cx + cw && gy >= cy && gy <= cy + chh) {
+                  var area = cw * chh;
+                  if (area < bestArea) { bestArea = area; bestComp = child.name; }
+                }
+              } catch (e) {}
+            }
+            if (child.children && child.children.length > 0) {
+              findSmallestContaining(child, gx, gy);
             }
           }
         }
+        findSmallestContaining(nf, fgi.absX, fgi.absY);
 
-        // Find nearest candidate by Euclidean distance to gesture coords
-        var nearestComp = null;
-        var minDist = Infinity;
-        for (var cci = 0; cci < compCandidates.length; cci++) {
-          var cand = compCandidates[cci];
-          try {
-            var at = cand.node.absoluteTransform;
-            var ccx = at[0][2] + cand.node.width / 2;
-            var ccy = at[1][2] + cand.node.height / 2;
-            var ddx = fgi.absX - ccx;
-            var ddy = fgi.absY - ccy;
-            var dd = Math.sqrt(ddx * ddx + ddy * ddy);
-            if (dd < minDist) { minDist = dd; nearestComp = cand.name; }
-          } catch (e) {}
+        // Pass 2: distance fallback if no containing INSTANCE found
+        if (!bestComp) {
+          var minDist = Infinity;
+          function findNearestFallback(node, gx, gy) {
+            if (!node) return;
+            var ch2 = (node.children != null ? node.children : []);
+            for (var fi2 = 0; fi2 < ch2.length; fi2++) {
+              var fc = ch2[fi2];
+              if (!fc) continue;
+              if (fc.type === 'INSTANCE') {
+                try {
+                  var at2 = fc.absoluteTransform;
+                  var fcx = at2[0][2] + fc.width / 2;
+                  var fcy = at2[1][2] + fc.height / 2;
+                  var dx = gx - fcx;
+                  var dy = gy - fcy;
+                  var dist = Math.sqrt(dx * dx + dy * dy);
+                  if (dist < minDist) { minDist = dist; bestComp = fc.name; }
+                } catch (e) {}
+              }
+              if (fc.children && fc.children.length > 0) {
+                findNearestFallback(fc, gx, gy);
+              }
+            }
+          }
+          findNearestFallback(nf, fgi.absX, fgi.absY);
         }
 
         frameInteractions.push({
-          componentName: (nearestComp != null ? nearestComp : 'Unknown'),
+          componentName: (bestComp != null ? bestComp : 'Unknown'),
           gestureType:   fgi.gestureType,
           gestureRaw:    fgi.gestureRaw,
         });
